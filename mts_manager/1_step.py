@@ -11,6 +11,9 @@ def start():
     # Подготовка данных к работе
     """
 
+    task_manager = TaskManager()
+    task = task_manager.create_task()
+
     # Создаем профиль в GoLogin
     print("Создаем профиль в GoLogin")
     profile = GoLoginAPI(config.GOLOGIN_API_TOKEN).create_profile("test")
@@ -21,7 +24,8 @@ def start():
 
     # Создаем запись в базу данных
     print("Создаем запись в базу данных")
-    TaskManager().create_task(
+    task_manager.update(
+        task.id,
         gologin_profile_id=profile.id,
         phone_number=phone
     )

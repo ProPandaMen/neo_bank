@@ -9,10 +9,11 @@ import datetime
 Base = declarative_base()
 
 
-class StepStatus(enum.Enum):
-    in_progress = "in_progress"
-    success = "success"
-    failed = "failed"
+class TaskStatus(enum.Enum):
+    CREATED = "created"
+    PREPARING = "preparing"
+    REGISTERING = "registering"
+    GETTING_CARD = "getting_card"
 
 
 class Task(Base):
@@ -20,18 +21,18 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+    status = Column(Enum(TaskStatus), default=TaskStatus.CREATED, nullable=False)
     gologin_profile_id = Column(String(128), nullable=True)
     phone_number = Column(String(32), nullable=True)
 
-    steps = relationship("TaskStep", back_populates="task", cascade="all, delete-orphan")
+    logs = relationship("TaskLogs", back_populates="task", cascade="all, delete-orphan")
 
 
-class TaskStep(Base):
-    __tablename__ = "task_steps"
+class TaskLogs(Base):
+    __tablename__ = "task_logs"
     id = Column(Integer, primary_key=True)
     task_id = Column(Integer, ForeignKey("tasks.id"))
-    started_at = Column(DateTime, default=datetime.datetime.utcnow)
-    status = Column(Enum(StepStatus), default=StepStatus.in_progress)
-    finished_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    description = Column(Text)
 
-    task = relationship("Task", back_populates="steps")
+    task = relationship("Task", back_populates="logs")
