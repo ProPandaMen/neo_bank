@@ -14,6 +14,7 @@ class StepStatus(enum.Enum):
     success = "success"
     failed = "failed"
 
+
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True)
@@ -21,6 +22,7 @@ class Task(Base):
 
     steps = relationship("TaskStep", back_populates="task", cascade="all, delete-orphan")
     result = relationship("TaskResult", back_populates="task", uselist=False, cascade="all, delete-orphan")
+
 
 class TaskStep(Base):
     __tablename__ = "task_steps"
@@ -31,6 +33,7 @@ class TaskStep(Base):
     finished_at = Column(DateTime, nullable=True)
 
     task = relationship("Task", back_populates="steps")
+
 
 class TaskResult(Base):
     __tablename__ = "task_results"

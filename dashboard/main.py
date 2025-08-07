@@ -3,66 +3,38 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
+from database.manager.task import TaskManager
+
 import streamlit as st
-import time
+import pandas as pd
 
 
-if "tasks" not in st.session_state:
-    st.session_state["tasks"] = []
-if "last_id" not in st.session_state:
-    st.session_state["last_id"] = 0
+st.set_page_config(page_title="Дашборд задач", layout="wide")
 
-TASK_STEPS = ["Подготовка", "Выполнение 1", "Выполнение 2", "Финал"]
+tabs = st.tabs(["📋 Все задачи"])
 
-def run_next_task():
-    last_id = st.session_state["last_id"] + 1
-    st.session_state["last_id"] = last_id
-    task = {
-        "id": last_id,
-        "step": 0,
-        "status": "running",
-        "log": []
-    }
-    st.session_state["tasks"].append(task)
+with tabs[0]:
+    st.header("Все задачи")
 
-def advance_task(task):
-    if task["step"] < len(TASK_STEPS) - 1:
-        task["step"] += 1
-        task["log"].append(f"{time.strftime('%X')}: Перешли к шагу '{TASK_STEPS[task['step']]}'")
-        if task["step"] == len(TASK_STEPS) - 1:
-            task["status"] = "done"
+    manager = TaskManager()
+
+    if st.button("➕ Создать новую задачу"):
+        new_task = manager.create_task()
+        st.success(f"Задача создана! ID: {new_task.id}")
+
+    tasks = manager.get_all_tasks()
+
+    if tasks:
+        data = [
+            {
+                "ID": task.id,
+                "Дата создания": task.created_at.strftime("%Y-%m-%d %H:%M:%S") if task.created_at else "-",
+            }
+            for task in tasks
+        ]
+        df = pd.DataFrame(data)
+        st.dataframe(df, hide_index=True, use_container_width=True)
     else:
-        task["status"] = "done"
-        task["log"].append(f"{time.strftime('%X')}: Задача завершена!")
+        st.info("Пока нет ни одной задачи.")
 
-st.title("Мониторинг конвейера задач")
-
-if (not st.session_state["tasks"]) or (st.session_state["tasks"][-1]["status"] == "done"):
-    if st.button("Запустить новую задачу"):
-        run_next_task()
-else:
-    st.info("Дождитесь завершения текущей задачи для запуска следующей.")
-
-st.write("---")
-st.write("### Список задач:")
-
-for task in st.session_state["tasks"]:
-    col1, col2, col3 = st.columns([1, 2, 2])
-    col1.write(f"**Задача #{task['id']}**")
-    col2.write(f"Статус: {task['status']}")
-    col3.write(f"Шаг: {TASK_STEPS[task['step']]} ({task['step']+1} из {len(TASK_STEPS)})")
-
-    if task["status"] != "done":
-        if st.button(f"Перейти к следующему шагу задачи #{task['id']}", key=f"advance_{task['id']}"):
-            advance_task(task)
-
-    with st.expander(f"Лог задачи #{task['id']}"):
-        if not task["log"]:
-            st.write("Нет записей.")
-        else:
-            for entry in task["log"]:
-                st.write(entry)
-
-st.write("---")
-done_count = sum(1 for t in st.session_state["tasks"] if t["status"] == "done")
-st.success(f"Всего задач завершено: {done_count} из {len(st.session_state['tasks'])}")
+    manager.close()
