@@ -1,4 +1,4 @@
-from proxy.main import Proxy
+from proxy_manager.main import Proxy
 
 import requests
 import config
@@ -31,6 +31,20 @@ class GoLoginAPI:
         profiles = response.json().get("profiles", [])
 
         return [GoLoginProfile(p) for p in profiles]
+    
+
+    def get_profile_by_id(self, profile_id):
+        url = f"{config.GOLOGIN_API_URL}/browser/{profile_id}"
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f"Ошибка получения профиля: {response.status_code}, {response.text}")
+
+        profile_data = response.json()
+        return GoLoginProfile(profile_data)
     
 
     def create_profile(self, name, proxy=None):

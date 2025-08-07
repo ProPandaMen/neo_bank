@@ -9,8 +9,11 @@ class TaskManager:
     def __init__(self):
         self.db = SessionLocal()
 
-    def create_task(self):
+    def create_task(self, gologin_profile_id, phone_number):
         task = Task()
+        task.gologin_profile_id = gologin_profile_id
+        task.phone_number = phone_number
+
         self.db.add(task)
         self.db.commit()
         self.db.refresh(task)
