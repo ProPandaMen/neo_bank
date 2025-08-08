@@ -6,7 +6,7 @@ import threading
 
 def run_streamlit():
     subprocess.run([
-        "streamlit", "run", "dashboard/main.py",
+        "streamlit", "run", "dashboard/streamlit_app.py",
         "--server.port=8501",
         "--server.address=0.0.0.0"
     ])

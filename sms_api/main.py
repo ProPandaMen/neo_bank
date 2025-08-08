@@ -12,8 +12,7 @@ def get_registration_number():
     exclude_senders = {"MTC.dengi", "MTC_ID", "MTC.Premium", "MTS.dengi"}
 
     for phone in sms_manager.get_phone_numbers():
-        print(f"Попытка поиска номера телефона №{attempt}")
-        print(phone)
+        print(f"Попытка поиска номера телефона №{attempt}")        
         sms_list = sms_manager.get_sms(phone)
         if not sms_list:            
             return phone

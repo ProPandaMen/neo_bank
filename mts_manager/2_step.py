@@ -8,7 +8,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from gologin import GoLogin
 
 from gologin_api.main import GoLoginAPI
-from database.manager.task import TaskManager
+from database.models.task import Task, TaskStatus
 from sms_api.main import wait_sms_code
 
 from datetime import datetime, timezone
@@ -23,8 +23,11 @@ def start(task_id, sleep_time=5, timeout=120):
     """
 
     # Создаем сессию GoLogin
-    print("Создаем сессию GoLogin")
-    task = TaskManager().get_task_by_id(task_id)
+    task = Task.get(id=task_id)
+    task.status = TaskStatus.REGISTERING
+    task.save()
+
+    task.add_log("Создаем сессию GoLogin")
     profile = GoLoginAPI(config.GOLOGIN_API_TOKEN).get_profile_by_id(task.gologin_profile_id)
 
     try:
@@ -44,15 +47,15 @@ def start(task_id, sleep_time=5, timeout=120):
         driver = webdriver.Chrome(service=service, options=chrome_options)
 
         # Заходим на сайт
-        print("Заходим на сайт")
-        driver.get("https://mtsdengi.ru/")        
+        task.add_log("Заходим на сайт")
+        driver.get("https://mtsdengi.ru/")
         time.sleep(sleep_time)
 
         driver.get("https://mtsdengi.ru/karti/debet-mts-dengi-virtual/")
         time.sleep(sleep_time)
 
         # Вводим номер телефона
-        print("Вводим номер телефона")
+        task.add_log("Вводим номер телефона")
         phone_field = driver.find_element(By.XPATH, '//*[@id="cardFormInput"]')
         phone_field.send_keys(task.phone_number[1:])
         time.sleep(sleep_time)
@@ -61,16 +64,16 @@ def start(task_id, sleep_time=5, timeout=120):
         button.click()
 
         # Ждем смс с кодом
-        print("Ждем смс с кодом")
+        task.add_log("Ждем смс с кодом")
         sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc))
         time.sleep(sleep_time)
 
         # Вводим код
-        print("Вводим код")
+        task.add_log("Вводим код")
         driver.switch_to.active_element.send_keys(sms_code)
 
         # Ждем регистрации
-        print("Ждем регистрации")
+        task.add_log("Ждем регистрации")
         WebDriverWait(driver, timeout).until(
             EC.text_to_be_present_in_element(
                 (By.TAG_NAME, "body"),
@@ -79,11 +82,10 @@ def start(task_id, sleep_time=5, timeout=120):
         )
     finally:
         # Закрываем драйвер
-        print("Закрываем драйвер")
+        task.add_log("Закрываем драйвер")
+        gl.stop()
         driver.quit()
 
 
 if __name__ == "__main__":
-    # Пример использования
-    task_id = 3
-    start(task_id)
+    start(1)
