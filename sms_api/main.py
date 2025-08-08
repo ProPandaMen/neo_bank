@@ -38,8 +38,8 @@ def parse_api_datetime(dt_string):
     return None
 
 
-def wait_sms_code(phone_number, after_datetime, timeout=120, poll_interval=5):
-    start_time = time.time()
+def wait_sms_code(phone_number, after_datetime, timeout=120, poll_interval=5, authorization=False):
+    start_time = time.time()    
     code_pattern = re.compile(r'\b\d{4,6}\b')
     allowed_senders = {"MTC.dengi", "MTS.dengi", "MTC_ID", "MTC.Premium"}
 

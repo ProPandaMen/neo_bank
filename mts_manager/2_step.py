@@ -21,12 +21,12 @@ def start(task_id, sleep_time=5, timeout=120):
     # Шаг №2
     # Регистрируемся на MTS деньги
     """
-
-    # Создаем сессию GoLogin
+    
     task = Task.get(id=task_id)
     task.status = TaskStatus.REGISTERING
     task.save()
 
+    # Создаем сессию GoLogin
     task.add_log("Создаем сессию GoLogin")
     profile = GoLoginAPI(config.GOLOGIN_API_TOKEN).get_profile_by_id(task.gologin_profile_id)
 
@@ -80,6 +80,7 @@ def start(task_id, sleep_time=5, timeout=120):
                 "Карта готова"
             )
         )
+        time.sleep(sleep_time)
     finally:
         # Закрываем драйвер
         task.add_log("Закрываем драйвер")

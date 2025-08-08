@@ -5,13 +5,13 @@ from sms_api.main import get_registration_number
 import config
 
 
-def start():
+def start(task_id):
     """
     # Шаг №1
     # Подготовка данных к работе
     """
 
-    task = Task.create()
+    task = Task.get(id=task_id)
     task.status = TaskStatus.PREPARING
     task.save()
 

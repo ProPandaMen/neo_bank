@@ -9,8 +9,17 @@ import pandas as pd
 
 st.title("📋 Задачи")
 
-if st.button("🔄 Обновить"):
-    st.rerun()
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    if st.button("➕ Создать задачу"):
+        task = Task.create()
+        st.success(f"Задача #{task.id} создана")
+        st.rerun()
+
+with col2:
+    if st.button("🔄 Обновить"):
+        st.rerun()
 
 tasks = Task.all()
 
