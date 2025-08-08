@@ -34,6 +34,9 @@ else:
             "Статус": t.status.value if t.status else "-",
             "GoLogin Profile": t.gologin_profile_id or "-",
             "Телефон": t.phone_number or "-",
+            "Номер карты": t.card_number or "-",
+            "Дата карты": t.card_date or "-",
+            "CVV": t.card_cvv or "-",
         })
 
     df = pd.DataFrame(rows)

@@ -60,8 +60,7 @@ def start(task_id, sleep_time=5, timeout=120):
         phone_field.send_keys(task.phone_number[1:])
         WebDriverWait(driver, sleep_time)
 
-        button = driver.find_element(By.XPATH, '//*[@id="issueCard"]/div[2]/form/div/div[5]/button')
-        button.click()
+        wait_click(driver, '//*[@id="issueCard"]/div[2]/form/div/div[5]/button')
 
         # Ждем смс с кодом
         task.add_log("Ждем смс с кодом")
@@ -90,4 +89,4 @@ def start(task_id, sleep_time=5, timeout=120):
 
 
 if __name__ == "__main__":
-    start(1)
+    start(2)

@@ -76,9 +76,12 @@ def start(task_id, sleep_time=20, timeout=120):
         WebDriverWait(driver, sleep_time)
 
         # Убираем рекламу
-        task.add_log("Убираем рекламу")
-        wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
-        WebDriverWait(driver, sleep_time)
+        try:
+            task.add_log("Убираем рекламу")
+            wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
+            WebDriverWait(driver, sleep_time)
+        except Exception:
+            pass
         
         # Открываем страницу с картой
         task.add_log("Открываем страницу с картой")
@@ -126,4 +129,4 @@ def start(task_id, sleep_time=20, timeout=120):
 
 
 if __name__ == "__main__":
-    start(3)
+    start(2)
