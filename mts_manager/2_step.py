@@ -9,11 +9,11 @@ from gologin import GoLogin
 
 from gologin_api.main import GoLoginAPI
 from database.models.task import Task, TaskStatus
+from mts_manager.base import wait_click, wait_visible
 from sms_api.main import wait_sms_code
 
 from datetime import datetime, timezone
 import config
-import time
 
 
 def start(task_id, sleep_time=5, timeout=120):
@@ -49,16 +49,16 @@ def start(task_id, sleep_time=5, timeout=120):
         # Заходим на сайт
         task.add_log("Заходим на сайт")
         driver.get("https://mtsdengi.ru/")
-        time.sleep(sleep_time)
+        WebDriverWait(driver, sleep_time)
 
         driver.get("https://mtsdengi.ru/karti/debet-mts-dengi-virtual/")
-        time.sleep(sleep_time)
+        WebDriverWait(driver, sleep_time)
 
         # Вводим номер телефона
         task.add_log("Вводим номер телефона")
-        phone_field = driver.find_element(By.XPATH, '//*[@id="cardFormInput"]')
+        phone_field = wait_visible(driver, '//*[@id="cardFormInput"]')
         phone_field.send_keys(task.phone_number[1:])
-        time.sleep(sleep_time)
+        WebDriverWait(driver, sleep_time)
 
         button = driver.find_element(By.XPATH, '//*[@id="issueCard"]/div[2]/form/div/div[5]/button')
         button.click()
@@ -66,11 +66,12 @@ def start(task_id, sleep_time=5, timeout=120):
         # Ждем смс с кодом
         task.add_log("Ждем смс с кодом")
         sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc))
-        time.sleep(sleep_time)
+        WebDriverWait(driver, sleep_time)
 
         # Вводим код
         task.add_log("Вводим код")
         driver.switch_to.active_element.send_keys(sms_code)
+        WebDriverWait(driver, sleep_time)
 
         # Ждем регистрации
         task.add_log("Ждем регистрации")
@@ -80,7 +81,7 @@ def start(task_id, sleep_time=5, timeout=120):
                 "Карта готова"
             )
         )
-        time.sleep(sleep_time)
+        WebDriverWait(driver, sleep_time)
     finally:
         # Закрываем драйвер
         task.add_log("Закрываем драйвер")

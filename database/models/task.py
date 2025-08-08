@@ -13,15 +13,23 @@ class TaskStatus(enum.Enum):
     PREPARING = "preparing"
     REGISTERING = "registering"
     GETTING_CARD = "getting_card"
+    FINISHED = "finished"
 
 
 class Task(BaseModel, Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True)
+
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     status = Column(Enum(TaskStatus), default=TaskStatus.CREATED, nullable=False)
+
     gologin_profile_id = Column(String(128), nullable=True)
     phone_number = Column(String(32), nullable=True)
+
+    card_number = Column(String(30), nullable=True)
+    card_date = Column(String(10), nullable=True)
+    card_cvv = Column(String(10), nullable=True)
+
     logs = relationship("TaskLogs", back_populates="task", cascade="all, delete-orphan")
 
     def add_log(self, description):

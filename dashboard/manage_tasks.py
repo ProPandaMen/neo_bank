@@ -32,6 +32,7 @@ script = st.selectbox(
     [
         ("mts_manager.1_step", "Шаг 1"),
         ("mts_manager.2_step", "Шаг 2")
+        ("mts_manager.3_step", "Шаг 3")
     ],
     format_func=lambda x: x[1]
 )
