@@ -1,77 +1,76 @@
-from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
+from gologin import GoLogin
 
 from database.models.task import Task, TaskStatus
-from proxy_manager.main import Proxy
+from gologin_api.main import GoLoginAPI
 from mts_manager.base import wait_click, wait_visible
 from sms_api.main import wait_sms_code
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+import config
 import time
 
 
-def get_driver():
-    proxy = Proxy().get_data()
-
-    USER = proxy.get("username")
-    PASS = proxy.get("password")
-    HOST = proxy.get("host")
-    PORT = proxy.get("port")
-
-    sw_options = {
-        "proxy": {
-            "http":  f"http://{USER}:{PASS}@{HOST}:{PORT}",
-            "https": f"http://{USER}:{PASS}@{HOST}:{PORT}",
-            "no_proxy": "localhost,127.0.0.1"
-        },
-        "verify_ssl": False
-    }
-
-
-    opts = ChromeOptions()
-    opts.add_argument("--headless=new")
-    opts.add_argument("--ignore-certificate-errors")
-    opts.add_argument("--allow-insecure-localhost")
-    opts.add_argument("--ignore-ssl-errors=yes")
-    opts.add_argument("--test-type")
-    opts.set_capability("acceptInsecureCerts", True)
-
-    driver = Chrome(
-        options=opts,
-        seleniumwire_options=sw_options,
-        version_main=112,
-    )
-
-    return driver
-
-
-def start(task_id, sleep_time=20):
-    driver = get_driver()
-
+def start(task_id, sleep_time=20, timeout=120):
+    """
+    # Шаг №3
+    # Получаем данные карты
+    """
+    
     task = Task.get(id=task_id)
     task.status = TaskStatus.GETTING_CARD
     task.save()
 
+    # Создаем сессию GoLogin
+    task.add_log("Создаем сессию GoLogin")
+    profile = GoLoginAPI(config.GOLOGIN_API_TOKEN).get_profile_by_id(task.gologin_profile_id)
+
     try:
+        gl = GoLogin({
+            "token": config.GOLOGIN_API_TOKEN,
+            "profile_id": profile.id
+        })
+        
+        debugger_address = gl.start()
+
+        chromium_version = gl.get_chromium_version()
+        service = Service(ChromeDriverManager(driver_version=chromium_version).install())
+
+        chrome_options = webdriver.ChromeOptions()        
+        chrome_options.add_experimental_option("debuggerAddress", debugger_address)
+
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+
         # Заходим на сайт
+        time.sleep(30)
         task.add_log("Заходим на сайт")
         driver.get("https://online.mtsdengi.ru/")
+        time.sleep(30)
         WebDriverWait(driver, sleep_time)
-        time.sleep(sleep_time)
 
-        # Вводим номер телефон        
+        # # Нажимаем кнопку входа
+        # task.add_log("Нажимаем кнопку авторизации")
+        # wait_click(driver, '//*[@id="__next"]/div/div[2]/div[1]/div[2]/div[2]/a')
+        # WebDriverWait(driver, sleep_time)
+
+        # Вводим номер телефона
         task.add_log("Вводим номер телефона")
         phone_field = wait_visible(driver, '//*[@id="login"]')
         phone_field.send_keys(task.phone_number[1:])
-        WebDriverWait(driver, sleep_time)        
+        WebDriverWait(driver, sleep_time)
 
         # Нажимаем кнопку войти
         task.add_log("Нажимаем кнопку войти")
-        wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')        
+        wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')
 
-        # Ждем смс с кодом
-        sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc) - timedelta(minutes=2))
-        WebDriverWait(driver, sleep_time)        
+        # Ждем смс с кодом        
+        task.add_log("Ждем смс с кодом")
+        sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc))
+        WebDriverWait(driver, sleep_time)
 
         # Вводим код    
         task.add_log("Вводим код")
@@ -79,17 +78,13 @@ def start(task_id, sleep_time=20):
         WebDriverWait(driver, sleep_time)
 
         # Убираем рекламу
-        # //*[@id="__next"]/div[1]/div/div[2]/div[5]/div
         try:
-            time.sleep(sleep_time)
-            # driver.save_screenshot("viewport.png")
             task.add_log("Убираем рекламу")
             wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
             WebDriverWait(driver, sleep_time)
-            driver.save_screenshot("viewport.png")
         except Exception:
             pass
-
+        
         # Открываем страницу с картой
         task.add_log("Открываем страницу с картой")
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div/div/div[3]/div/div[2]/div/div')
@@ -131,8 +126,9 @@ def start(task_id, sleep_time=20):
     finally:
         # Закрываем драйвер
         task.add_log("Закрываем драйвер")
+        gl.stop()
         driver.quit()
 
 
 if __name__ == "__main__":
-    start(4)
+    start(2)
