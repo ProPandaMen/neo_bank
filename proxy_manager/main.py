@@ -1,5 +1,6 @@
 import config
 
+
 class Proxy:
     def __init__(self, mode=None, host=None, port=None, username=None, password=None, change_ip_url=None):
         if mode is None:

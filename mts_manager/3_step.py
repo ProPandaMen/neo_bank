@@ -1,48 +1,12 @@
-from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 
 from database.models.task import Task, TaskStatus
-from proxy_manager.main import Proxy
-from mts_manager.base import wait_click, wait_visible
+from mts_manager.base import wait_click, wait_visible, get_driver
 from sms_api.main import wait_sms_code
 
 from datetime import datetime, timezone, timedelta
+
 import time
-
-
-def get_driver():
-    proxy = Proxy().get_data()
-
-    USER = proxy.get("username")
-    PASS = proxy.get("password")
-    HOST = proxy.get("host")
-    PORT = proxy.get("port")
-
-    sw_options = {
-        "proxy": {
-            "http":  f"http://{USER}:{PASS}@{HOST}:{PORT}",
-            "https": f"http://{USER}:{PASS}@{HOST}:{PORT}",
-            "no_proxy": "localhost,127.0.0.1"
-        },
-        "verify_ssl": False
-    }
-
-
-    opts = ChromeOptions()
-    opts.add_argument("--headless=new")
-    opts.add_argument("--ignore-certificate-errors")
-    opts.add_argument("--allow-insecure-localhost")
-    opts.add_argument("--ignore-ssl-errors=yes")
-    opts.add_argument("--test-type")
-    opts.set_capability("acceptInsecureCerts", True)
-
-    driver = Chrome(
-        options=opts,
-        seleniumwire_options=sw_options,
-        version_main=112,
-    )
-
-    return driver
 
 
 def start(task_id, sleep_time=20):
@@ -53,37 +17,30 @@ def start(task_id, sleep_time=20):
     task.save()
 
     try:
-        # Заходим на сайт
-        task.add_log("Заходим на сайт")
+        # Заходим на сайт        
         driver.get("https://online.mtsdengi.ru/")
         WebDriverWait(driver, sleep_time)
         time.sleep(sleep_time)
 
-        # Вводим номер телефон        
-        task.add_log("Вводим номер телефона")
+        # Вводим номер телефон                
         phone_field = wait_visible(driver, '//*[@id="login"]')
         phone_field.send_keys(task.phone_number[1:])
         WebDriverWait(driver, sleep_time)        
 
         # Нажимаем кнопку войти
-        task.add_log("Нажимаем кнопку войти")
-        wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')        
+        wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')
 
         # Ждем смс с кодом
         sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc) - timedelta(minutes=2))
         WebDriverWait(driver, sleep_time)        
 
-        # Вводим код    
-        task.add_log("Вводим код")
+        # Вводим код
         driver.switch_to.active_element.send_keys(sms_code)
         WebDriverWait(driver, sleep_time)
 
         # Убираем рекламу
-        # //*[@id="__next"]/div[1]/div/div[2]/div[5]/div
         try:
             time.sleep(sleep_time)
-            # driver.save_screenshot("viewport.png")
-            task.add_log("Убираем рекламу")
             wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
             WebDriverWait(driver, sleep_time)
             driver.save_screenshot("viewport.png")
@@ -91,36 +48,30 @@ def start(task_id, sleep_time=20):
             pass
 
         # Открываем страницу с картой
-        task.add_log("Открываем страницу с картой")
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div/div/div[3]/div/div[2]/div/div')
         WebDriverWait(driver, sleep_time)
 
         # Показать номер карты
-        task.add_log("Показать номер карты")        
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[1]/div')
         WebDriverWait(driver, sleep_time)
 
         # Записываем номер карты
-        task.add_log("Показать номер карты")
         card_number_block = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[1]/div/div/div/div/span')
         task.card_number = card_number_block.text
         task.save()
         WebDriverWait(driver, sleep_time)
 
         # Записываем номер карты
-        task.add_log("Записываем номер карты")
         card_date_block = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[2]/div/div/div/span')
         task.card_date = card_date_block.text
         task.save()
         WebDriverWait(driver, sleep_time)
 
-        # Показываем CVV
-        task.add_log("Показываем CVV")        
+        # Показываем CVV 
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/i')
         WebDriverWait(driver, sleep_time)
 
         # Записываем CVV
-        task.add_log("Записываем CVV")
         card_cvv_value = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/div/span[2]')
         task.card_cvv = card_cvv_value.text
         task.save()
@@ -130,7 +81,6 @@ def start(task_id, sleep_time=20):
         task.save()
     finally:
         # Закрываем драйвер
-        task.add_log("Закрываем драйвер")
         driver.quit()
 
 

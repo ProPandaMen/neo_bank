@@ -1,34 +1,38 @@
-from gologin_api.main import GoLoginAPI
 from database.models.task import Task, TaskStatus
+from mts_manager.base import get_driver
 from sms_api.main import get_registration_number
+from proxy_manager.main import Proxy
 
-import config
+import requests
 
 
 def start(task_id):
-    """
-    # Шаг №1
-    # Подготовка данных к работе
-    """
-
     task = Task.get(id=task_id)
     task.status = TaskStatus.PREPARING
     task.save()
 
-    # Создаем профиль в GoLogin
-    task.add_log("Создаем профиль в GoLogin")
-    profile = GoLoginAPI(config.GOLOGIN_API_TOKEN).create_profile("test")
+    try:
+        # Ищем подходящий номер телефона
+        phone = get_registration_number()
 
-    # Ищем подходящий номер телефона
-    task.add_log("Ищем подходящий номер телефона")
-    phone = get_registration_number()
+        # Создаем запись в базу данных
+        task.phone_number = phone
+        task.save()
 
-    # Создаем запись в базу данных
-    task.add_log("Создаем запись в базу данных")
-    task.gologin_profile_id = profile.id
-    task.phone_number = phone
-    task.save()
+        # Меняем IP прокси    
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; WOW64; en-US) AppleWebKit/533.34 (KHTML, like Gecko) Chrome/53.0.3445.122 Safari/603.9 Edge/15.62649"
+        }
+
+        url = Proxy().change_ip_url
+        data = requests.get(url, headers=headers)
+
+        if data.json().get('code') != 200:
+            raise Exception("Не удалось сменить IP прокси")
+    except Exception:
+        pass
+
 
 
 if __name__ == "__main__":
-    start()
+    start(1)
