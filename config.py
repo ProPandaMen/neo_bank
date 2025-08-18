@@ -5,12 +5,11 @@ import os
 load_dotenv(override=True)
 
 """
-# GoLogin
+# Celery
 """
-GOLOGIN_API_TOKEN = os.getenv("GOLOGIN_API_TOKEN")
-GOLOGIN_API_URL = os.getenv("GOLOGIN_API_URL")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_BACKEND_URL = os.getenv("CELERY_BACKEND_URL")
 
-PROFILE_NAME = os.getenv("PROFILE_NAME")
 
 """
 # Proxy

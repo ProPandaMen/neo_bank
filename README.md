@@ -1,12 +1,8 @@
-# Этапы разработчки
-[+] - создавать профиль (GoLogin)
-[+] - добавлять к нему proxy
-
-[ ] - регистрация на mts
-[ ] - получаем номер карты
+# Start dashboard
+    python run.py
 
 
-# Доп задачи
+# Start celery
+    celery -A scheduler.app.celery worker --loglevel=INFO
 
-[ ] - Организация даш борда
-[ ] - Организация базы данных
+    celery -A scheduler.app.celery beat --loglevel=INFO --schedule=/tmp/celerybeat-schedule

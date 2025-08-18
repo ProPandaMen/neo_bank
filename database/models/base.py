@@ -26,7 +26,7 @@ class BaseModel:
         objs = db.query(cls).order_by(cls.created_at.desc()).all()
         db.close()
         return objs
-    
+
     @classmethod
     def filter(cls, order_by=None, limit: int | None = None, offset: int | None = None, **kwargs):
         db = SessionLocal()
@@ -35,10 +35,7 @@ class BaseModel:
             if order_by is None and hasattr(cls, "created_at"):
                 q = q.order_by(cls.created_at.desc())
             elif order_by is not None:
-                if isinstance(order_by, (list, tuple)):
-                    q = q.order_by(*order_by)
-                else:
-                    q = q.order_by(order_by)
+                q = q.order_by(*order_by) if isinstance(order_by, (list, tuple)) else q.order_by(order_by)
             if offset:
                 q = q.offset(offset)
             if limit:
@@ -46,6 +43,33 @@ class BaseModel:
             return q.all()
         finally:
             db.close()
+
+    @classmethod
+    def filter_ex(cls, where=None, order_by=None, limit=None, offset=None, for_update=False, skip_locked=False, db=None):
+        owns = db is None
+        db = db or SessionLocal()
+        try:
+            q = db.query(cls)
+            if where:
+                if isinstance(where, (list, tuple)):
+                    for cond in where:
+                        q = q.filter(cond)
+                else:
+                    q = q.filter(where)
+            if order_by is None and hasattr(cls, "created_at"):
+                q = q.order_by(cls.created_at.desc())
+            elif order_by is not None:
+                q = q.order_by(*order_by) if isinstance(order_by, (list, tuple)) else q.order_by(order_by)
+            if for_update:
+                q = q.with_for_update(skip_locked=skip_locked)
+            if offset:
+                q = q.offset(offset)
+            if limit:
+                q = q.limit(limit)
+            return q.all()
+        finally:
+            if owns:
+                db.close()
 
     def save(self):
         sess = object_session(self) or SessionLocal()
