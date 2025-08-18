@@ -21,9 +21,16 @@ class BaseModel:
         return obj
 
     @classmethod
-    def all(cls):
+    def all(cls, order_by=None):
         db = SessionLocal()
-        objs = db.query(cls).order_by(cls.created_at.desc()).all()
+        q = db.query(cls)
+        if order_by is None and hasattr(cls, "created_at"):
+            q = q.order_by(cls.created_at.desc())
+        elif order_by is None and hasattr(cls, "id"):
+            q = q.order_by(cls.id.desc())
+        elif order_by is not None:
+            q = q.order_by(*order_by) if isinstance(order_by, (list, tuple)) else q.order_by(order_by)
+        objs = q.all()
         db.close()
         return objs
 

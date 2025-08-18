@@ -1,11 +1,12 @@
 from database.base import init_db
 
-import os
-import sys
-import time
+import subprocess
+import argparse
 import atexit
 import signal
-import subprocess
+import time
+import sys
+import os
 
 
 procs = []
@@ -23,15 +24,30 @@ def stop_all():
         except Exception:
             pass
 
-
-def main():
-    print("🔨 Инициализация БД...")
-    init_db()
-    print("🚀 Старт сервисов...")
+def run_dashboard():
     spawn([sys.executable, "-m", "streamlit", "run", "dashboard/app.py", "--server.port=8501"])
+
+def run_celery():
     spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "worker", "-Q", "executor", "-n", "executor@%h", "-c", "1", "--prefetch-multiplier=1"])
     spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "worker", "-Q", "scheduler", "-n", "scheduler@%h", "-c", "1"])
     spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "beat"])
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dashboard", action="store_true")
+    parser.add_argument("--celery", action="store_true")
+    args = parser.parse_args()
+
+    selected_dashboard = args.dashboard or (not args.dashboard and not args.celery)
+    selected_celery = args.celery or (not args.dashboard and not args.celery)
+
+    print("🔨 Инициализация БД...")
+    init_db()
+    print("🚀 Старт сервисов...")
+    if selected_dashboard:
+        run_dashboard()
+    if selected_celery:
+        run_celery()
     try:
         while True:
             time.sleep(1)
@@ -43,7 +59,6 @@ def main():
     finally:
         print("🛑 Остановка...")
         stop_all()
-
 
 if __name__ == "__main__":
     atexit.register(stop_all)

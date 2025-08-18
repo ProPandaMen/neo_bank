@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from scheduler.app import celery_app as celery
+from scheduler.celery_app import celery_app as celery
 from scheduler.scheduling import utcnow, next_fire
 from database.base import SessionLocal
 from database.models.task import JobSchedule, JobRun, ConflictPolicy, Task, RunState

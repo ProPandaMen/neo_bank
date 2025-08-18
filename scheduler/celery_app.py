@@ -21,4 +21,3 @@ celery_app.conf.update(
         "retry-tick": {"task": "scheduler.retry_tick", "schedule": 10.0},
     },
 )
-

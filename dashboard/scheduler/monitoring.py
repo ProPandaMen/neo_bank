@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
-from scheduler.app import celery
+from scheduler.celery_app import celery_app
 from celery.result import AsyncResult
 
 import streamlit as st
@@ -11,7 +11,7 @@ import streamlit as st
 st.set_page_config(page_title="Мониторинг задач", layout="wide")
 st.title("📊 Все запущенные процессы")
 
-i = celery.control.inspect()
+i = celery_app.control.inspect()
 
 active_tasks = i.active() or {}
 reserved_tasks = i.reserved() or {}
@@ -45,7 +45,7 @@ st.dataframe(rows, use_container_width=True)
 st.subheader("Проверить результат задачи")
 task_id = st.text_input("Task ID")
 if task_id:
-    res = AsyncResult(task_id, app=celery)
+    res = AsyncResult(task_id, app=celery_app)
     st.write({
         "ID": task_id,
         "Status": res.status,
