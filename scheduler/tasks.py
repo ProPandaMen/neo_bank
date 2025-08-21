@@ -181,8 +181,7 @@ def execute_pipeline(self, run_id: int):
 @celery.task(name="scheduler.retry_tick")
 def retry_tick():
     # Ретраи: пробегаемся по упавшим прогонaм и ставим повтор на основе настроек расписания
-    now = utcnow()
-    failed = JobRun.filter(where={"state": RunState.FAILED}, limit=100)
+    failed = JobRun.filter(state=RunState.FAILED, limit=100)
     restarted = 0
     for run in failed:
         sched = JobSchedule.get(id=run.schedule_id)

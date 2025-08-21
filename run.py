@@ -10,10 +10,12 @@ import os
 
 
 procs = []
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 def spawn(cmd):
-    p = subprocess.Popen(cmd, start_new_session=True)
+    p = subprocess.Popen(cmd, start_new_session=True, cwd=PROJECT_ROOT, env={**os.environ, "PYTHONPATH": PROJECT_ROOT + os.pathsep + os.environ.get("PYTHONPATH","")})
     procs.append(p)
+    
     return p
 
 def stop_all():
@@ -28,9 +30,9 @@ def run_dashboard():
     spawn([sys.executable, "-m", "streamlit", "run", "dashboard/app.py", "--server.port=8501"])
 
 def run_celery():
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "worker", "-Q", "executor", "-n", "executor@%h", "-c", "1", "--prefetch-multiplier=1"])
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "worker", "-Q", "scheduler", "-n", "scheduler@%h", "-c", "1"])
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.app:celery_app", "beat"])
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "executor", "-n", "executor@%h", "-c", "1", "--prefetch-multiplier=1"])
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "scheduler", "-n", "scheduler@%h", "-c", "1"])
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "beat"])
 
 def main():
     parser = argparse.ArgumentParser()

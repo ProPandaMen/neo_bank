@@ -11,6 +11,7 @@ celery_app = Celery(
 celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    include=["scheduler.tasks"],
     task_routes={
         "scheduler.tick": {"queue": "scheduler"},
         "scheduler.retry_tick": {"queue": "scheduler"},
