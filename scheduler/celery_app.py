@@ -13,12 +13,12 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     include=["scheduler.tasks"],
     task_routes={
-        "scheduler.tick": {"queue": "scheduler"},
-        "scheduler.retry_tick": {"queue": "scheduler"},
-        "scheduler.execute_pipeline": {"queue": "executor"},
+        "scheduler.scheduler_tick": {"queue": "scheduler"},
+        "scheduler.pipeline_execute": {"queue": "scheduler"},
+        "scheduler.scheduler_retry": {"queue": "executor"},
     },
     beat_schedule={
-        "tick": {"task": "scheduler.tick", "schedule": 5.0},
-        "retry-tick": {"task": "scheduler.retry_tick", "schedule": 10.0},
+        "scheduler_tick": {"task": "scheduler.scheduler_tick", "schedule": 5.0},
+        "scheduler_retry": {"task": "scheduler.scheduler_retry", "schedule": 10.0},
     },
 )

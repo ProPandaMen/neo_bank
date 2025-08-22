@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Text, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Text, ForeignKey, JSON
+from sqlalchemy import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.mutable import MutableList
 
 from database.base import Base
 from database.models.base import BaseModel
@@ -65,90 +67,11 @@ class TaskLogs(BaseModel, Base):
     task = relationship("Task", back_populates="logs")
 
 
-class ScheduleType(enum.Enum):
-    CRON = "cron"
-    INTERVAL = "interval"
-    ONEOFF = "oneoff"
+class TaskSettings(Base, BaseModel):
+    __tablename__ = "task_settings"
 
-
-class ConflictPolicy(enum.Enum):
-    ENQUEUE = "enqueue"
-    SKIP = "skip"
-
-
-class JobSchedule(BaseModel, Base):
-    __tablename__ = "job_schedules"
     id = Column(Integer, primary_key=True)
-
-    # Уникальное имя расписания (для дашборда/поиска)
-    name = Column(String(128), unique=True, nullable=False)
-
-    # Celery-задача-исполнитель (обычно scheduler.execute_pipeline)
-    task_name = Column(String(256), nullable=False)
-    # Очередь Celery для запусков
-    queue = Column(String(64), nullable=True)
-
-    # Позиционные аргументы для Celery-задачи
-    args = Column(JSON, default=list, nullable=False)
-    # Именованные аргументы (сюда кладём pipeline)
-    kwargs = Column(JSON, default=dict, nullable=False)
-
-    # Тип расписания: CRON/INTERVAL/ONEOFF
-    schedule_type = Column(Enum(ScheduleType), nullable=False)
-    # CRON-выражение (если CRON)
-    cron_expr = Column(String(128), nullable=True)
-    # Интервал в секундах (если INTERVAL)
-    interval_seconds = Column(Integer, nullable=True)
-    # Таймзона для CRON
-    timezone = Column(String(64), default="UTC", nullable=False)
-
-    # Включено/выключено
-    enabled = Column(Boolean, default=True, nullable=False)
-    # Одновременных прогонов по этому расписанию
-    max_instances = Column(Integer, default=1, nullable=False)
-    # Поведение при занятости: SKIP/ENQUEUE
-    policy = Column(Enum(ConflictPolicy), default=ConflictPolicy.SKIP, nullable=False)
-    # Случайный сдвиг запуска, сглаживание пиков
-    jitter_seconds = Column(Integer, default=0, nullable=False)
-
-    # Макс. число ретраев для каждого прогона
-    retry_limit = Column(Integer, default=3, nullable=False)
-    # Стартовая задержка ретрая (сек)
-    backoff_initial = Column(Integer, default=30, nullable=False)
-    # Верхняя граница бэкоффа (сек)
-    backoff_max = Column(Integer, default=3600, nullable=False)
-
-    # Время последнего запуска
-    last_run_at = Column(DateTime, nullable=True)
-    # Следующее запланированное время
-    next_run_at = Column(DateTime, nullable=True)
-    
-    # Внутренний «замок» тика, чтобы не дергать одно и то же
-    locked_until = Column(DateTime, nullable=True)
-
-    runs = relationship("JobRun", back_populates="schedule", cascade="all, delete-orphan")
-
-
-class JobRun(BaseModel, Base):
-    __tablename__ = "job_runs"
-    id = Column(Integer, primary_key=True)
-    schedule_id = Column(Integer, ForeignKey("job_schedules.id"), index=True, nullable=False)
-    task_id = Column(Integer, ForeignKey("tasks.id"), index=True, nullable=True)
-
-    # Время создания прогона
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    # Время фактического старта
-    started_at = Column(DateTime, nullable=True)
-    # Время завершения
-    finished_at = Column(DateTime, nullable=True)
-
-    # Состояние прогона: QUEUED/RUNNING/FAILED/SUCCESS
-    state = Column(Enum(RunState), default=RunState.QUEUED, nullable=False)
-    # Номер попытки (для ретраев)
-    attempt = Column(Integer, default=0, nullable=False)
-    # Когда можно повторить (если используется отложенный ретрай)
-    next_retry_at = Column(DateTime, nullable=True)
-    # Короткое описание ошибки последней попытки
-    error = Column(String(2000), nullable=True)
-
-    schedule = relationship("JobSchedule", back_populates="runs")
+    name = Column(String(128), unique=True, nullable=False, index=True)
+    scripts = Column(MutableList.as_mutable(JSON), nullable=False, default=list)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

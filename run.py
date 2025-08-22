@@ -30,9 +30,7 @@ def run_dashboard():
     spawn([sys.executable, "-m", "streamlit", "run", "dashboard/app.py", "--server.port=8501"])
 
 def run_celery():
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "executor", "-n", "executor@%h", "-c", "1", "--prefetch-multiplier=1"])
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "scheduler", "-n", "scheduler@%h", "-c", "1"])
-    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "beat"])
+    pass
 
 def main():
     parser = argparse.ArgumentParser()
