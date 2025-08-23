@@ -12,11 +12,13 @@ import os
 procs = []
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
+
 def spawn(cmd):
     p = subprocess.Popen(cmd, start_new_session=True, cwd=PROJECT_ROOT, env={**os.environ, "PYTHONPATH": PROJECT_ROOT + os.pathsep + os.environ.get("PYTHONPATH","")})
     procs.append(p)
     
     return p
+
 
 def stop_all():
     for p in procs[::-1]:
@@ -26,11 +28,19 @@ def stop_all():
         except Exception:
             pass
 
+
 def run_dashboard():
     spawn([sys.executable, "-m", "streamlit", "run", "dashboard/app.py", "--server.port=8501"])
 
+
 def run_celery():
-    pass
+    schedule_file = os.path.join(PROJECT_ROOT, "celerybeat-schedule")
+    if os.path.exists(schedule_file):
+        os.remove(schedule_file)
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "scheduler", "-n", "scheduler@%h", "-l", "INFO"])
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "worker", "-Q", "executor", "-n", "executor@%h", "-l", "INFO"])
+    spawn([sys.executable, "-m", "celery", "-A", "scheduler.celery_app:celery_app", "beat", "-l", "INFO"])
+
 
 def main():
     parser = argparse.ArgumentParser()

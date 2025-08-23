@@ -1,20 +1,20 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Enum as EnumType
 from sqlalchemy import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.mutable import MutableList
+from enum import Enum
 
 from database.base import Base
 from database.models.base import BaseModel
 
-import enum
 import datetime
 
 
-class RunState(enum.Enum):
-    QUEUED = "queued"
-    RUNNING = "running"
-    FAILED = "failed"
-    SUCCESS = "success"
+class StepStatus(Enum):
+    WAITING = "Ожидание"
+    RUNNING = "В работе"
+    ERROR = "Ошибка"
+    SUCCESS = "Успешно"
 
 
 class Task(BaseModel, Base):
@@ -23,30 +23,29 @@ class Task(BaseModel, Base):
 
     # Время создания
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    # Текущий статус
-    state = Column(Enum(RunState), default=RunState.QUEUED, nullable=False)
 
     # Номер текущего шага (0-based)
     step_index = Column(Integer, default=0, nullable=False)
     # Общее кол-во шагов в пайплайне на момент старта
     steps_total = Column(Integer, default=0, nullable=False)
-    # Человекочитаемое имя текущего шага
-    step_name = Column(String(128), nullable=True)
-
-    # Снимок последовательности шагов: [{name, module}, ...]
-    pipeline = Column(JSON, nullable=True)
+    # Статус текущего шага
+    step_status = Column(
+        EnumType(
+            StepStatus,
+            native_enum=False,
+            values_callable=lambda x: [e.value for e in x],
+            name="step_status"
+        ),
+        nullable=False,
+        default=StepStatus.WAITING,
+        server_default=StepStatus.WAITING.value,
+        index=True,
+    )
 
     # Данные карты
     card_number = Column(String(30), nullable=True)
     card_date = Column(String(10), nullable=True)
     card_cvv = Column(String(10), nullable=True)
-
-    # Какой воркер/хост сейчас исполняет
-    locked_by = Column(String(64), nullable=True)
-    # Момент захвата задачи воркером
-    locked_at = Column(DateTime, nullable=True)
-    # Текст последней ошибки, если упала
-    error = Column(Text, nullable=True)
 
     logs = relationship("TaskLogs", back_populates="task", cascade="all, delete-orphan")
 
