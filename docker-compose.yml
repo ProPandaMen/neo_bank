@@ -70,3 +70,4 @@ services:
 
 volumes:
   beat-state:
+  postgres-data:
