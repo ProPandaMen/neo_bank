@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+*.pyc
+celerybeat-schedule*
+*.sqlite
+*.db
+.env
+

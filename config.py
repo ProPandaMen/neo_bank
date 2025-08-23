@@ -12,6 +12,12 @@ CELERY_BACKEND_URL = os.getenv("CELERY_BACKEND_URL")
 
 
 """
+# DATABASE
+"""
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+"""
 # Proxy
 """
 PROXY_MODE = os.getenv("PROXY_MODE")
