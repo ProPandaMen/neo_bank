@@ -1,6 +1,6 @@
 from selenium.webdriver.support.ui import WebDriverWait
 
-from database.models.task import Task, TaskStatus
+from database.models.task import Task
 from mts_manager.base import wait_click, wait_visible, get_driver
 from sms_api.main import wait_sms_code
 
@@ -13,7 +13,6 @@ def start(task_id, sleep_time=20):
     driver = get_driver()
 
     task = Task.get(id=task_id)
-    task.status = TaskStatus.GETTING_CARD
     task.save()
 
     try:
@@ -75,10 +74,7 @@ def start(task_id, sleep_time=20):
         card_cvv_value = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/div/span[2]')
         task.card_cvv = card_cvv_value.text
         task.save()
-        WebDriverWait(driver, sleep_time)
-
-        task.status = TaskStatus.FINISHED
-        task.save()
+        WebDriverWait(driver, sleep_time)        
     finally:
         # Закрываем драйвер
         driver.quit()

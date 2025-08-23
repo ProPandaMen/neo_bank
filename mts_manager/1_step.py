@@ -1,5 +1,4 @@
-from database.models.task import Task, TaskStatus
-from mts_manager.base import get_driver
+from database.models.task import Task
 from sms_api.main import get_registration_number
 from proxy_manager.main import Proxy
 
@@ -8,8 +7,6 @@ import requests
 
 def start(task_id):
     task = Task.get(id=task_id)
-    task.status = TaskStatus.PREPARING
-    task.save()
 
     try:
         # Ищем подходящий номер телефона

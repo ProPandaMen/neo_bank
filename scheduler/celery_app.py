@@ -12,11 +12,15 @@ celery_app = Celery(
 celery_app.conf.update(
     task_queues=(Queue("scheduler"), Queue("executor")),
     task_default_queue="scheduler",
-    include=["scheduler.planner"],
+    include=["scheduler.planner", "scheduler.task_runner"],
     task_routes={
         "scheduler.planner": {"queue": "scheduler"},
+        "scheduler.task_execute": {"queue": "executor"},
     },
     beat_schedule={
-        "planner-tick": {"task": "scheduler.planner", "schedule": 10.0},
+        "planner-tick": {
+            "task": "scheduler.planner",
+            "schedule": 10.0,
+        },
     },
 )

@@ -2,7 +2,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
-from database.models.task import Task, TaskStatus
+from database.models.task import Task
 from mts_manager.base import wait_click, wait_visible, get_driver
 from sms_api.main import wait_sms_code
 
@@ -13,7 +13,6 @@ def start(task_id, sleep_time=5, timeout=120):
     driver = get_driver()
     
     task = Task.get(id=task_id)
-    task.status = TaskStatus.REGISTERING
     task.save()
 
     try:

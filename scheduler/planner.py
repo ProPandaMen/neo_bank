@@ -16,7 +16,7 @@ def _settings():
     parallel_limit = getattr(ts, "parallel_limit", 1) or 1
     create_batch = getattr(ts, "create_batch", 1) or 1
     scripts = list(ts.scripts or [])
-    
+
     return scripts, int(parallel_limit), int(create_batch)
 
 
