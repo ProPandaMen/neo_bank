@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Enum as EnumType
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Float, JSON, Enum as EnumType
 from sqlalchemy import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.mutable import MutableList
@@ -42,7 +42,16 @@ class Task(BaseModel, Base):
         index=True,
     )
 
-    # Данные карты
+    locked_by = Column(String(128), nullable=True, index=True)
+    locked_until = Column(DateTime, nullable=True, index=True)
+    step_started_at = Column(DateTime, nullable=True)
+    step_attempts = Column(Integer, nullable=False, default=0, server_default="0")
+    next_attempt_at = Column(DateTime, nullable=True, index=True)
+    last_error = Column(Text, nullable=True)
+
+    # Данные     
+    phone_number = Column(String(20), nullable=True)
+    
     card_number = Column(String(30), nullable=True)
     card_date = Column(String(10), nullable=True)
     card_cvv = Column(String(10), nullable=True)
@@ -72,5 +81,14 @@ class TaskSettings(Base, BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(128), unique=True, nullable=False, index=True)
     scripts = Column(MutableList.as_mutable(JSON), nullable=False, default=list)
+
+    parallel_limit = Column(Integer, nullable=False, default=1, server_default="1")
+    create_batch = Column(Integer, nullable=False, default=1, server_default="1")
+    step_timeout = Column(Integer, nullable=False, default=3600, server_default="3600")
+    retry_limit = Column(Integer, nullable=False, default=3, server_default="3")
+    backoff_initial = Column(Integer, nullable=False, default=60, server_default="60")
+    backoff_factor = Column(Float, nullable=False, default=2.0, server_default="2.0")
+    backoff_max = Column(Integer, nullable=False, default=3600, server_default="3600")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -107,3 +107,8 @@ staticfiles/
 
 # Optional: Ignore your migrations if you want
 # */migrations/
+
+# Celery Beat schedule
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat-schedule.*
