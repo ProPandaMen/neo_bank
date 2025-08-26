@@ -14,16 +14,16 @@
 # Alembic
 
 ### Создать новую миграцию
-docker compose run --rm migrate alembic revision --autogenerate -m "описание изменений"
+docker exec -it neo_bank-dashboard-1 alembic revision --autogenerate -m "описание изменений"
 
 ### Создать новую миграцию (сравнивает модели и БД):
-docker compose run --rm migrate alembic upgrade head
+docker exec -it neo_bank-dashboard-1 alembic upgrade head
 
 ### Откатить до конкретной ревизии
-docker compose run --rm migrate alembic downgrade -1
+docker exec -it neo_bank-dashboard-1 alembic downgrade -1
 
 ### Откатить до конкретной ревизии
-docker compose run --rm migrate alembic downgrade abc123def456
+docker exec -it neo_bank-dashboard-1 alembic downgrade abc123def456
 
 ### Применить миграции до конкретной ревизии
-docker compose run --rm migrate alembic upgrade abc123def456
+docker exec -it neo_bank-dashboard-1 alembic upgrade abc123def456

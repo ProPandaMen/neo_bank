@@ -1,5 +1,3 @@
-from database.base import init_db
-
 import subprocess
 import argparse
 import atexit
@@ -50,9 +48,7 @@ def main():
 
     selected_dashboard = args.dashboard or (not args.dashboard and not args.celery)
     selected_celery = args.celery or (not args.dashboard and not args.celery)
-
-    print("🔨 Инициализация БД...")
-    init_db()
+    
     print("🚀 Старт сервисов...")
     if selected_dashboard:
         run_dashboard()

@@ -26,3 +26,11 @@ PROXY_PORT = int(os.getenv("PROXY_PORT"))
 PROXY_USERNAME = os.getenv("PROXY_USERNAME")
 PROXY_PASSWORD = os.getenv("PROXY_PASSWORD")
 PROXY_CHANGE_IP_URL = os.getenv("PROXY_CHANGE_IP_URL")
+
+
+"""
+# Logs
+"""
+LOG_DIR = os.getenv("LOG_DIR")
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, os.getenv("LOG_FILE"))

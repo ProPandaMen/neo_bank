@@ -8,7 +8,7 @@ import datetime
 import sys
 
 
-logger = get_task_logger("task_runner")
+logger = get_task_logger(__name__)
 
 
 def _settings():
@@ -31,11 +31,14 @@ def run_script(path: str, task_id: int):
 
 @celery_app.task(name="scheduler.task_execute", bind=True)
 def task_execute(self, task_id: int):
+    logger.info("Start task_execute")
+
     cfg = _settings()
     t = Task.get(id=task_id)
     if not t:
         logger.error(f"Task {task_id} not found")
         return "missing"
+    
     scripts = cfg["scripts"]
     if not scripts:
         TaskLogs.create(task_id=t.id, description="нет скриптов")
@@ -85,4 +88,6 @@ def task_execute(self, task_id: int):
     t.locked_by = None
     t.locked_until = None
     t.save()
+
+    logger.info("Done task_execute")
     return "ok"

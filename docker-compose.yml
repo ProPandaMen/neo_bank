@@ -18,10 +18,13 @@ services:
       context: .
       dockerfile: dashboard/Dockerfile
     command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      - PYTHONPATH=/app
     env_file: .env
     working_dir: /app
     volumes:
       - .:/app
+      - ./logs:/app/logs
     ports:
       - "8501:8501"
     depends_on:
@@ -37,6 +40,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ./logs:/app/logs
     depends_on:
       - redis
       - postgres
@@ -50,6 +54,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ./logs:/app/logs
     depends_on:
       - redis
       - postgres
@@ -63,6 +68,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ./logs:/app/logs
       - beat-state:/tmp
     depends_on:
       - redis

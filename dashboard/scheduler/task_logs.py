@@ -1,8 +1,6 @@
-import sys, os, datetime
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
-import streamlit as st
 from database.models.task import Task, TaskLogs, StepStatus
+import streamlit as st
+
 
 st.set_page_config(page_title="Логи задачи", layout="wide")
 st.title("🧾 Логи задачи")

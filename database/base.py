@@ -12,6 +12,3 @@ else:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
-
-def init():
-    Base.metadata.create_all(bind=engine)

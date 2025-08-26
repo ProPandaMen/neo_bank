@@ -4,7 +4,7 @@ from .celery_app import celery_app
 from database.models.task import Task, TaskLogs, StepStatus, TaskSettings
 
 
-logger = get_task_logger("planner")
+logger = get_task_logger(__name__)
 
 
 def _settings():
@@ -22,6 +22,8 @@ def _settings():
 
 @celery_app.task(name="scheduler.planner")
 def planer():
+    logger.info("Start planner")
+
     scripts, parallel_limit, create_batch = _settings()
     running = Task.filter(step_status=StepStatus.RUNNING)
     capacity = max(0, parallel_limit - len(running))
@@ -51,4 +53,10 @@ def planer():
             created += 1
 
     logger.info(f"started={started} retried={retried} created={created} cap={parallel_limit}")
-    return {"started": started, "retried": retried, "created": created, "parallel_limit": parallel_limit}
+    
+    return {
+        "started": started, 
+        "retried": retried, 
+        "created": created, 
+        "parallel_limit": parallel_limit
+    }

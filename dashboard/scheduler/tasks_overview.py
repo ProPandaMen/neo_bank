@@ -1,10 +1,10 @@
-import sys, os, datetime
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from database.models.task import Task, TaskLogs, StepStatus
+from sqlalchemy import and_
 
 import streamlit as st
 import pandas as pd
-from sqlalchemy import and_
-from database.models.task import Task, TaskLogs, StepStatus
+import datetime
+
 
 st.set_page_config(page_title="Задачи", layout="wide")
 st.title("📋 Задачи")
