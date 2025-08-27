@@ -1,4 +1,3 @@
-from celery.utils.log import get_task_logger
 from utils.task_logging import log_task
 
 from datetime import datetime, timezone
@@ -8,30 +7,42 @@ import time
 import re
 
 
-def get_registration_number(task_id=None):
+def get_registration_number(task_id: int | None = None):
     attempt = 0
-    
     sms_manager = SMSManager()
     exclude_senders = {"MTC.dengi", "MTC_ID", "MTC.Premium", "MTS.dengi"}
 
+    if task_id:
+        log_task(task_id, "Поиск номера", "Начало поиска свободного номера")
+
     for phone in sms_manager.get_phone_numbers():
         if task_id:
-            log_task(task_id, "Поиск номера", f"Попытка поиска номера телефона №{attempt}")        
+            log_task(task_id, "Поиск номера", f"Попытка #{attempt}: проверяю номер {phone}")
 
         sms_list = sms_manager.get_sms(phone)
-        if not sms_list:            
+
+        if not sms_list:
+            if task_id:
+                log_task(task_id, "Поиск номера", f"Найден номер без SMS: {phone}")
+                log_task(task_id, "Поиск номера", "Поиск завершён успешно")
             return phone
 
-        senders = {sms.get("sender") for sms in sms_list}
+        senders = {sms.get("sender") for sms in sms_list if sms}
         if not (senders & exclude_senders):
+            if task_id:
+                log_task(task_id, "Поиск номера", f"Найден подходящий номер (без нежелательных отправителей): {phone}")
+                log_task(task_id, "Поиск номера", "Поиск завершён успешно")
             return phone
-                
+
         if task_id:
-            log_task(task_id, "Поиск номера", f"Пропускае номер {phone}")
+            log_task(task_id, "Поиск номера", f"Номер {phone} отклонён: нежелательные отправители {senders & exclude_senders}")
 
         attempt += 1
         time.sleep(1)
 
+    if task_id:
+        log_task(task_id, "Поиск номера", "Поиск завершён: свободный номер не найден")
+        
     return None
 
 
