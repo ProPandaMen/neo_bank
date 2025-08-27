@@ -8,6 +8,9 @@ import json
 import time
 
 
+UPDATE_INTERVAL = 5
+
+
 def render_task_details(task_id: int):
     cols = st.columns(2)
     if cols[0].button("← Все задачи"):
@@ -51,7 +54,6 @@ def render_task_details(task_id: int):
 
     ctrl = st.columns([2, 1])
     auto = ctrl[0].toggle("Автообновление", value=False)
-    interval = ctrl[1].number_input("Интервал, сек", min_value=2, max_value=30, value=5, step=1)
 
     logs = TaskLogs.filter_ex(
         where=[TaskLogs.task_id == task_id],
@@ -92,5 +94,5 @@ def render_task_details(task_id: int):
         st.dataframe(df, use_container_width=True, hide_index=True)
 
     if auto:
-        time.sleep(int(interval))
+        time.sleep(UPDATE_INTERVAL)
         st.rerun()
