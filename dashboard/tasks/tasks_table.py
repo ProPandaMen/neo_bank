@@ -1,17 +1,12 @@
 from database.models.task import Task, TaskLogs, StepStatus
 from sqlalchemy import and_
+from scheduler.celery_app import celery_app
 
 import streamlit as st
 import pandas as pd
 import datetime
 
 st.set_page_config(page_title="Задачи", layout="wide")
-
-def mask_card(v):
-    if not v:
-        return ""
-    v = v.replace(" ", "")
-    return ("*" * (len(v) - 4)) + v[-4:]
 
 status_map = {
     StepStatus.WAITING: "🟡 Ожидание",
@@ -40,7 +35,7 @@ with st.sidebar:
         dr = None
     else:
         statuses = st.multiselect("Статус", options=list(StepStatus), format_func=lambda x: x.value)
-        id_or_card = st.text_input("ID или часть номера карты")
+        id_or_card = st.text_input("ID задачи")
         dr = st.date_input("Дата создания", value=None)
         page_size = st.selectbox("Размер страницы", [10, 20, 50, 100], index=1)
         page = st.number_input("Страница", min_value=1, value=1, step=1)
@@ -56,8 +51,6 @@ else:
         s = id_or_card.strip()
         if s.isdigit():
             where.append(Task.id == int(s))
-        else:
-            where.append(Task.card_number.like(f"%{s}%"))
     if dr:
         if isinstance(dr, list) and len(dr) == 2:
             start = datetime.datetime.combine(dr[0], datetime.time.min)
@@ -85,20 +78,37 @@ else:
             "Шаг": f"{t.step_index + 1}/{t.steps_total}",
             "Прогресс": pct,
             "Статус": status_map.get(t.step_status, str(t.step_status.value if hasattr(t.step_status, 'value') else t.step_status)),
-            "Карта": mask_card(t.card_number or ""),
         })
     df = pd.DataFrame(data)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     for t in rows:
-        cols = st.columns([1, 5, 4, 2, 2, 2])
+        cols = st.columns([1, 5, 4, 2, 3, 3])
         cols[0].markdown(f"**#{t.id}**")
         cols[1].markdown(t.created_at.strftime("%Y-%m-%d %H:%M:%S"))
         cols[2].progress(0 if (t.steps_total or 0) == 0 else (min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)))
         cols[3].markdown(status_map.get(t.step_status, ""))
-        cols[4].markdown(mask_card(t.card_number or ""))
-        if cols[5].button("Логи", key=f"logs_{t.id}"):
+        if cols[4].button("Логи", key=f"logs_{t.id}"):
             st.query_params["task_id"] = str(t.id)
+            st.rerun()
+        if cols[5].button("Перезапустить", key=f"restart_{t.id}"):
+            tt = Task.get(id=t.id)
+            tt.step_index = 0
+            tt.step_attempts = 0
+            tt.next_attempt_at = None
+            tt.last_error = None
+            tt.locked_by = None
+            tt.locked_until = None
+            tt.step_started_at = None
+            tt.step_status = StepStatus.WAITING
+            tt.save()
+            TaskLogs.create(task_id=tt.id, description="restarted via dashboard")
+            try:
+                celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")
+                st.success(f"Задача #{tt.id} перезапущена")
+            except Exception as e:
+                TaskLogs.create(task_id=tt.id, description=f"restart error: {e}")
+                st.error(f"Ошибка перезапуска: {e}")
             st.rerun()
 
     if not selected_task_id:
@@ -115,9 +125,37 @@ if selected_task_id and rows:
     t = rows[0]
     st.divider()
     st.subheader(f"🧾 Логи задачи #{t.id}")
+    act_cols = st.columns(2)
+    if act_cols[0].button("🧹 Очистить логи", key=f"clear_{t.id}"):
+        logs = TaskLogs.filter_ex(where=[TaskLogs.task_id == t.id], order_by=TaskLogs.id.asc(), limit=100000, offset=0)
+        for x in logs:
+            x.delete()
+        TaskLogs.create(task_id=t.id, description="logs cleared via dashboard")
+        st.success("Логи очищены")
+        st.rerun()
+    if act_cols[1].button("🔁 Перезапустить задачу", key=f"restart_sel_{t.id}"):
+        tt = Task.get(id=t.id)
+        tt.step_index = 0
+        tt.step_attempts = 0
+        tt.next_attempt_at = None
+        tt.last_error = None
+        tt.locked_by = None
+        tt.locked_until = None
+        tt.step_started_at = None
+        tt.step_status = StepStatus.WAITING
+        tt.save()
+        TaskLogs.create(task_id=tt.id, description="restarted via dashboard")
+        try:
+            celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")
+            st.success(f"Задача #{tt.id} перезапущена")
+        except Exception as e:
+            TaskLogs.create(task_id=tt.id, description=f"restart error: {e}")
+            st.error(f"Ошибка перезапуска: {e}")
+        st.rerun()
+
     logs = TaskLogs.filter_ex(
         where=[TaskLogs.task_id == t.id],
-        order_by=TaskLogs.created_at.asc(),
+        order_by=TaskLogs.created_at.desc(),
         limit=2000,
         offset=0,
     )
@@ -126,3 +164,4 @@ if selected_task_id and rows:
         st.info("Логи отсутствуют")
     else:
         st.dataframe(ldf, use_container_width=True, hide_index=True, height=600)
+
