@@ -1,8 +1,12 @@
+from celery.utils.log import get_task_logger
 from datetime import datetime, timezone
 
 import requests
 import time
 import re
+
+
+logger = get_task_logger(__name__)
 
 
 def get_registration_number():
@@ -12,7 +16,8 @@ def get_registration_number():
     exclude_senders = {"MTC.dengi", "MTC_ID", "MTC.Premium", "MTS.dengi"}
 
     for phone in sms_manager.get_phone_numbers():
-        print(f"Попытка поиска номера телефона №{attempt}")        
+        logger.info(f"Попытка поиска номера телефона №{attempt}")
+
         sms_list = sms_manager.get_sms(phone)
         if not sms_list:            
             return phone
@@ -22,6 +27,7 @@ def get_registration_number():
             return phone
         
         attempt += 1
+        logger.info(f"Пропускаем {phone}")
         time.sleep(1)
 
     return None

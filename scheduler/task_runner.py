@@ -26,7 +26,7 @@ def _settings():
 def run_script(path: str, task_id: int):    
     TaskLogs.create(
         task_id=task_id, 
-        description=f"Task script start:{path}"
+        description=f"CELERY: start script {path}"
     )
 
     cmd = [sys.executable, path, str(task_id)] if path.endswith(".py") else [path, str(task_id)]
@@ -34,7 +34,7 @@ def run_script(path: str, task_id: int):
 
     TaskLogs.create(
         task_id=task_id, 
-        description=f"Task script finish:{path}"
+        description=f"CELERY: finish script {path}"
     )
     return proc.returncode, (proc.stdout or ""), (proc.stderr or "")
 

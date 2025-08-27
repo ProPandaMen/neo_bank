@@ -1,21 +1,24 @@
 from database.models.task import Task
-from sms_api.main import get_registration_number
 from proxy_manager.main import Proxy
+
+from sms_api.main import get_registration_number
+from utils.task_logging import log_task
 
 import requests
 
 
-def start(task_id):    
+def start(task_id):
     task = Task.get(id=task_id)
-    task.add_log(f"Start task ID:{task_id}")
+    log_task(task_id, "старт", f"Старт задачи #{task_id}")
     
     # Ищем подходящий номер телефона
     phone = get_registration_number()
-    task.add_log(f"Select phone: {phone}")
+    log_task(task_id, "поиск номера", f"Выбран номер: {phone}")
 
     # Создаем запись в базу данных
     task.phone_number = phone
     task.save()
+    log_task(task_id, "сохранение данных", "Номер сохранён")
 
     # Меняем IP прокси    
     headers = {
@@ -24,13 +27,13 @@ def start(task_id):
 
     url = Proxy().change_ip_url
     data = requests.get(url, headers=headers)
-    task.add_log(f"Edit proxt IP")
+    log_task(task_id, "смена ip", "Запрос на смену IP отправлен")
 
     if data.json().get('code') != 200:
+        log_task(task_id, "смена ip", "Не удалось сменить IP")
         raise Exception("Не удалось сменить IP прокси")
     
-    task.add_log(f"Finish task")
-
+    log_task(task_id, "завершение", "Шаг завершён")
 
 
 if __name__ == "__main__":
