@@ -126,13 +126,13 @@ if selected_task_id and rows:
     st.divider()
     st.subheader(f"🧾 Логи задачи #{t.id}")
     act_cols = st.columns(2)
+
     if act_cols[0].button("🧹 Очистить логи", key=f"clear_{t.id}"):
-        logs = TaskLogs.filter_ex(where=[TaskLogs.task_id == t.id], order_by=TaskLogs.id.asc(), limit=100000, offset=0)
-        for x in logs:
-            x.delete()
+        TaskLogs.delete_where(where=[TaskLogs.task_id == t.id])
         TaskLogs.create(task_id=t.id, description="logs cleared via dashboard")
         st.success("Логи очищены")
         st.rerun()
+
     if act_cols[1].button("🔁 Перезапустить задачу", key=f"restart_sel_{t.id}"):
         tt = Task.get(id=t.id)
         tt.step_index = 0
@@ -144,13 +144,16 @@ if selected_task_id and rows:
         tt.step_started_at = None
         tt.step_status = StepStatus.WAITING
         tt.save()
+
         TaskLogs.create(task_id=tt.id, description="restarted via dashboard")
+
         try:
             celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")
             st.success(f"Задача #{tt.id} перезапущена")
         except Exception as e:
             TaskLogs.create(task_id=tt.id, description=f"restart error: {e}")
             st.error(f"Ошибка перезапуска: {e}")
+            
         st.rerun()
 
     logs = TaskLogs.filter_ex(

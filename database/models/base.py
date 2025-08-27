@@ -78,6 +78,29 @@ class BaseModel:
             if owns:
                 db.close()
 
+    def delete(self):
+        sess = object_session(self) or SessionLocal()
+        sess.delete(self)
+        sess.commit()
+        if not object_session(self):
+            sess.close()
+
+    @classmethod
+    def delete_where(cls, where=None):
+        db = SessionLocal()
+        try:
+            q = db.query(cls)
+            if where:
+                if isinstance(where, (list, tuple)):
+                    for cond in where:
+                        q = q.filter(cond)
+                else:
+                    q = q.filter(where)
+            q.delete(synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+            
     def save(self):
         sess = object_session(self) or SessionLocal()
         sess.add(self)
