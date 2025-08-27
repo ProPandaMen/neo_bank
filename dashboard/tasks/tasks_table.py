@@ -29,19 +29,35 @@ def render_tasks_table():
     if not tasks:
         st.info("Пока нет данных")
         return
+
     data = []
     for t in tasks:
-        pct = 0 if (t.steps_total or 0) == 0 else int(round((min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)) * 100))
+        pct = 0 if (t.steps_total or 0) == 0 else int(
+            round((min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)) * 100)
+        )
         data.append({
             "ID": t.id,
             "Создано": t.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "Шаг": f"{t.step_index + 1}/{t.steps_total}",
             "Прогресс": f"{pct}%",
             "Статус": status_map.get(t.step_status, ""),
-            "Подробнее": f"[Открыть](?task_id={t.id})",
+            "Подробнее": f"/?task_id={t.id}",
         })
+
     df = pd.DataFrame(data)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.data_editor(
+        df,
+        column_config={
+            "Подробнее": st.column_config.LinkColumn(
+                "Подробнее",
+                display_text="Открыть"
+            )
+        },
+        hide_index=True,
+        use_container_width=True,
+        disabled=True,
+    )
 
 def render_task_details(task_id: int):
     cols = st.columns(2)
