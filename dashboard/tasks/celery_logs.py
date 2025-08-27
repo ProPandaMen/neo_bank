@@ -14,7 +14,7 @@ auto = st.toggle("Автообновление", value=False)
 lvl = st.multiselect("Уровни", ["DEBUG","INFO","WARNING","ERROR","CRITICAL"], default=["INFO","WARNING","ERROR","CRITICAL"])
 task = st.text_input("Фильтр по task")
 task_id = st.text_input("Фильтр по task_id")
-limit = st.number_input("Сколько последних строк", min_value=100, max_value=100000, value=5000, step=100)
+limit = st.number_input("Сколько последних строк", min_value=100, max_value=100000, value=500, step=100)
 
 def read_tail_lines(p, n):
     if not p.exists():
