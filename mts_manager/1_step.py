@@ -1,5 +1,6 @@
 from database.models.task import Task
 from proxy_manager.main import Proxy
+from sms_api.main import SMSManager
 
 from sms_api.main import get_registration_number
 from utils.task_logging import log_task
@@ -12,8 +13,11 @@ def start(task_id):
     log_task(task_id, "старт", f"Старт задачи #{task_id}")
     
     # Ищем подходящий номер телефона
-    phone = get_registration_number()
+    phone = get_registration_number(task_id)
     log_task(task_id, "поиск номера", f"Выбран номер: {phone}")
+
+    SMSManager().update_tag(phone)
+    log_task(task_id, "обновления тега", f"Тег обновлен: {phone}")
 
     # Создаем запись в базу данных
     task.phone_number = phone
