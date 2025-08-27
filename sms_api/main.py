@@ -15,7 +15,9 @@ def get_registration_number(task_id: int | None = None):
     if task_id:
         log_task(task_id, "Поиск номера", "Начало поиска свободного номера")
 
-    for phone in sms_manager.get_phone_numbers():
+    phone_list = sms_manager.get_phone_numbers()    
+
+    for phone in phone_list:
         if task_id:
             log_task(task_id, "Поиск номера", f"Попытка #{attempt}: проверяю номер {phone}")
 
