@@ -35,8 +35,7 @@ services:
     build:
       context: .
       dockerfile: scheduler/Dockerfile
-    command: celery -A scheduler.celery_app:celery_app worker -Q scheduler -n scheduler@%h -l INFO
-    # network_mode: host
+    command: celery -A scheduler.celery_app:celery_app worker -Q scheduler -n scheduler@%h -l INFO    
     env_file: .env
     working_dir: /app
     environment:
@@ -52,8 +51,7 @@ services:
     build:
       context: .
       dockerfile: scheduler/Dockerfile
-    command: celery -A scheduler.celery_app:celery_app worker -Q executor -n executor@%h -l INFO
-    # network_mode: host
+    command: celery -A scheduler.celery_app:celery_app worker -Q executor -n executor@%h -l INFO    
     env_file: .env
     working_dir: /app
     environment:
@@ -69,8 +67,7 @@ services:
     build:
       context: .
       dockerfile: scheduler/Dockerfile
-    command: celery -A scheduler.celery_app:celery_app beat -l INFO --schedule=/tmp/celerybeat-schedule
-    # network_mode: host
+    command: celery -A scheduler.celery_app:celery_app beat -l INFO --schedule=/tmp/celerybeat-schedule    
     env_file: .env
     working_dir: /app
     environment:
