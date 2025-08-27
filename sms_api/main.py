@@ -42,7 +42,7 @@ def get_registration_number(task_id: int | None = None):
 
     if task_id:
         log_task(task_id, "Поиск номера", "Поиск завершён: свободный номер не найден")
-        
+
     return None
 
 
@@ -93,7 +93,7 @@ class SMSManager:
         response.raise_for_status()
 
         data = response.json()
-        return data.get("phones", [])    
+        return data.get("phones", [])
 
     def get_sms(self, phone_number):
         url = f"http://95.179.248.237/api/sms?&number={phone_number}"
