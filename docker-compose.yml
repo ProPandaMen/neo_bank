@@ -36,7 +36,7 @@ services:
       context: .
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app worker -Q scheduler -n scheduler@%h -l INFO
-    network_mode: host
+    # network_mode: host
     env_file: .env
     working_dir: /app
     environment:
@@ -70,7 +70,7 @@ services:
       context: .
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app beat -l INFO --schedule=/tmp/celerybeat-schedule
-    network_mode: host
+    # network_mode: host
     env_file: .env
     working_dir: /app
     environment:
