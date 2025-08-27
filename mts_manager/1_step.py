@@ -11,6 +11,7 @@ def start(task_id):
     try:
         # Ищем подходящий номер телефона
         phone = get_registration_number()
+        task.add_log(f"select phone: {phone}")
 
         # Создаем запись в базу данных
         task.phone_number = phone
