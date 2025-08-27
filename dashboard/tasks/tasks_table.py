@@ -41,7 +41,7 @@ def render_tasks_table():
             "Шаг": f"{t.step_index + 1}/{t.steps_total}",
             "Прогресс": f"{pct}%",
             "Статус": status_map.get(t.step_status, ""),
-            "Подробнее": f"/?task_id={t.id}",
+            "Подробнее": f"/tasks_table?task_id={t.id}",
         })
 
     df = pd.DataFrame(data)
