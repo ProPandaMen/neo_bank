@@ -97,7 +97,8 @@ class SMSManager:
         response = requests.get(url, params=params)
         response.raise_for_status()
         
-        return response.json()
+        data = response.json()
+        return data.get("phones")
 
     def get_sms(self, phone_number):
         url = f"http://95.179.248.237/api/sms"
