@@ -7,7 +7,7 @@ import time
 import re
 
 
-def get_registration_number(task_id: int | None = None):
+def get_registration_number(task_id: int):
     attempt = 0
     sms_manager = SMSManager()
     exclude_senders = {"MTC.dengi", "MTC_ID", "MTC.Premium", "MTS.dengi"}
@@ -89,17 +89,23 @@ def wait_sms_code(phone_number, after_datetime, timeout=120, poll_interval=5, au
 
 
 class SMSManager:
-    def get_phone_numbers(self, tag_name="__EMPTY__"):
-        url = f"http://95.179.248.237/api/phones?tag_name={tag_name}"
-        response = requests.get(url)
+    def get_phone_numbers(self, tag_name="__EMPTY__"):        
+        url = f"http://95.179.248.237/api/phones"
+        params = {
+            "tag_name": tag_name
+        }
+        response = requests.get(url, params=params)
         response.raise_for_status()
 
         data = response.json()
         return data.get("phones", [])
 
     def get_sms(self, phone_number):
-        url = f"http://95.179.248.237/api/sms?&number={phone_number}"
-        response = requests.get(url)
+        url = f"http://95.179.248.237/api/sms"
+        params = {
+            "number": phone_number
+        }
+        response = requests.get(url, params=params)
         response.raise_for_status()
 
         data = response.json()
