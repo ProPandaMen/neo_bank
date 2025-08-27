@@ -36,6 +36,8 @@ services:
       context: .
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app worker -Q scheduler -n scheduler@%h -l INFO
+    environment:
+      - PYTHONPATH=/app
     env_file: .env
     working_dir: /app
     volumes:
@@ -51,6 +53,8 @@ services:
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app worker -Q executor -n executor@%h -l INFO
     env_file: .env
+    environment:
+      - PYTHONPATH=/app
     working_dir: /app
     volumes:
       - .:/app
@@ -65,6 +69,8 @@ services:
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app beat -l INFO --schedule=/tmp/celerybeat-schedule
     env_file: .env
+    environment:
+      - PYTHONPATH=/app
     working_dir: /app
     volumes:
       - .:/app
