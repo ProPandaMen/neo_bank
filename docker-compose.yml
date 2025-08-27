@@ -53,7 +53,7 @@ services:
       context: .
       dockerfile: scheduler/Dockerfile
     command: celery -A scheduler.celery_app:celery_app worker -Q executor -n executor@%h -l INFO
-    network_mode: host
+    # network_mode: host
     env_file: .env
     working_dir: /app
     environment:
