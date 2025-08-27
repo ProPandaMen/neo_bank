@@ -1,5 +1,4 @@
 from database.models.task import Task, TaskLogs, StepStatus
-from sqlalchemy import and_
 from scheduler.celery_app import celery_app
 
 import streamlit as st
@@ -15,84 +14,49 @@ status_map = {
     StepStatus.SUCCESS: "🟢 Успешно"
 }
 
-selected_task_id = st.query_params.get("task_id")
-if selected_task_id:
-    st.title(f"📋 Задача #{selected_task_id}")
-else:
-    st.title("📋 Задачи")
+def get_selected_task_id():
+    v = st.query_params.get("task_id")
+    return int(v) if v else None
 
-with st.sidebar:
-    st.subheader("Фильтры")
-    if selected_task_id:
-        st.markdown(f"Выбрана задача **#{selected_task_id}**")
-        if st.button("← Все задачи"):
-            st.query_params.pop("task_id", None)
-            st.rerun()
-        page_size = 1
-        page = 1
-        statuses = []
-        id_or_card = ""
-        dr = None
+def render_title(task_id: int | None):
+    if task_id:
+        st.title(f"📋 Задача #{task_id}")
     else:
-        statuses = st.multiselect("Статус", options=list(StepStatus), format_func=lambda x: x.value)
-        id_or_card = st.text_input("ID задачи")
-        dr = st.date_input("Дата создания", value=None)
-        page_size = st.selectbox("Размер страницы", [10, 20, 50, 100], index=1)
-        page = st.number_input("Страница", min_value=1, value=1, step=1)
-        st.button("Обновить")
+        st.title("📋 Задачи")
 
-where = []
-if selected_task_id:
-    where.append(Task.id == int(selected_task_id))
-else:
-    if statuses:
-        where.append(Task.step_status.in_(statuses))
-    if id_or_card:
-        s = id_or_card.strip()
-        if s.isdigit():
-            where.append(Task.id == int(s))
-    if dr:
-        if isinstance(dr, list) and len(dr) == 2:
-            start = datetime.datetime.combine(dr[0], datetime.time.min)
-            end = datetime.datetime.combine(dr[1], datetime.time.max)
-            where.append(and_(Task.created_at >= start, Task.created_at <= end))
-        elif hasattr(dr, "year"):
-            start = datetime.datetime.combine(dr, datetime.time.min)
-            end = datetime.datetime.combine(dr, datetime.time.max)
-            where.append(and_(Task.created_at >= start, Task.created_at <= end))
-
-offset = (page - 1) * page_size
-rows = Task.filter_ex(where=where, order_by=Task.created_at.desc(), limit=page_size + 1, offset=offset)
-has_next = len(rows) > page_size
-rows = rows[:page_size]
-
-if not rows:
-    st.info("Пока нет данных")
-else:
+def render_tasks_table():
+    tasks = Task.all()
+    if not tasks:
+        st.info("Пока нет данных")
+        return
     data = []
-    for t in rows:
+    for t in tasks:
         pct = 0 if (t.steps_total or 0) == 0 else int(round((min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)) * 100))
         data.append({
             "ID": t.id,
-            "Создано": t.created_at,
+            "Создано": t.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "Шаг": f"{t.step_index + 1}/{t.steps_total}",
-            "Прогресс": pct,
-            "Статус": status_map.get(t.step_status, str(t.step_status.value if hasattr(t.step_status, 'value') else t.step_status)),
+            "Прогресс": f"{pct}%",
+            "Статус": status_map.get(t.step_status, ""),
+            "Подробнее": f"[Открыть](?task_id={t.id})",
         })
     df = pd.DataFrame(data)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    for t in rows:
-        cols = st.columns([1, 5, 4, 2, 3, 3])
-        cols[0].markdown(f"**#{t.id}**")
-        cols[1].markdown(t.created_at.strftime("%Y-%m-%d %H:%M:%S"))
-        cols[2].progress(0 if (t.steps_total or 0) == 0 else (min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)))
-        cols[3].markdown(status_map.get(t.step_status, ""))
-        if cols[4].button("Логи", key=f"logs_{t.id}"):
-            st.query_params["task_id"] = str(t.id)
-            st.rerun()
-        if cols[5].button("Перезапустить", key=f"restart_{t.id}"):
-            tt = Task.get(id=t.id)
+def render_task_details(task_id: int):
+    cols = st.columns(2)
+    if cols[0].button("← Все задачи"):
+        st.query_params.pop("task_id", None)
+        st.rerun()
+    act_cols = st.columns(2)
+    if act_cols[0].button("🧹 Очистить логи"):
+        TaskLogs.delete_where(where=[TaskLogs.task_id == task_id])
+        TaskLogs.create(task_id=task_id, description="logs clear")
+        st.success("Логи очищены")
+        st.rerun()
+    if act_cols[1].button("🔁 Перезапустить задачу"):
+        tt = Task.get(id=task_id)
+        if tt:
             tt.step_index = 0
             tt.step_attempts = 0
             tt.next_attempt_at = None
@@ -102,7 +66,7 @@ else:
             tt.step_started_at = None
             tt.step_status = StepStatus.WAITING
             tt.save()
-            TaskLogs.create(task_id=tt.id, description="restarted via dashboard")
+            TaskLogs.create(task_id=tt.id, description="Restart task")
             try:
                 celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")
                 st.success(f"Задача #{tt.id} перезапущена")
@@ -110,54 +74,11 @@ else:
                 TaskLogs.create(task_id=tt.id, description=f"restart error: {e}")
                 st.error(f"Ошибка перезапуска: {e}")
             st.rerun()
-
-    if not selected_task_id:
-        nav = st.columns(3)
-        if nav[0].button("← Назад", disabled=(page == 1)):
-            st.query_params["page"] = str(max(1, page - 1))
-            st.rerun()
-        nav[1].markdown(f"Стр. **{page}**")
-        if nav[2].button("Вперёд →", disabled=not has_next):
-            st.query_params["page"] = str(page + 1)
-            st.rerun()
-
-if selected_task_id and rows:
-    t = rows[0]
-    st.divider()
-    st.subheader(f"🧾 Логи задачи #{t.id}")
-    act_cols = st.columns(2)
-
-    if act_cols[0].button("🧹 Очистить логи", key=f"clear_{t.id}"):
-        TaskLogs.delete_where(where=[TaskLogs.task_id == t.id])
-        TaskLogs.create(task_id=t.id, description="logs cleared via dashboard")
-        st.success("Логи очищены")
-        st.rerun()
-
-    if act_cols[1].button("🔁 Перезапустить задачу", key=f"restart_sel_{t.id}"):
-        tt = Task.get(id=t.id)
-        tt.step_index = 0
-        tt.step_attempts = 0
-        tt.next_attempt_at = None
-        tt.last_error = None
-        tt.locked_by = None
-        tt.locked_until = None
-        tt.step_started_at = None
-        tt.step_status = StepStatus.WAITING
-        tt.save()
-
-        TaskLogs.create(task_id=tt.id, description="restarted via dashboard")
-
-        try:
-            celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")
-            st.success(f"Задача #{tt.id} перезапущена")
-        except Exception as e:
-            TaskLogs.create(task_id=tt.id, description=f"restart error: {e}")
-            st.error(f"Ошибка перезапуска: {e}")
-            
-        st.rerun()
-
+        else:
+            st.error("Задача не найдена")
+    st.subheader(f"🧾 Логи задачи #{task_id}")
     logs = TaskLogs.filter_ex(
-        where=[TaskLogs.task_id == t.id],
+        where=[TaskLogs.task_id == task_id],
         order_by=TaskLogs.created_at.desc(),
         limit=2000,
         offset=0,
@@ -168,3 +89,12 @@ if selected_task_id and rows:
     else:
         st.dataframe(ldf, use_container_width=True, hide_index=True, height=600)
 
+def main():
+    task_id = get_selected_task_id()
+    render_title(task_id)
+    if task_id:
+        render_task_details(task_id)
+    else:
+        render_tasks_table()
+
+main()

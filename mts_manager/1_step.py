@@ -7,28 +7,25 @@ import requests
 
 def start(task_id):
     task = Task.get(id=task_id)
+    
+    # Ищем подходящий номер телефона
+    phone = get_registration_number()
+    task.add_log(f"select phone: {phone}")
 
-    try:
-        # Ищем подходящий номер телефона
-        phone = get_registration_number()
-        task.add_log(f"select phone: {phone}")
+    # Создаем запись в базу данных
+    task.phone_number = phone
+    task.save()
 
-        # Создаем запись в базу данных
-        task.phone_number = phone
-        task.save()
+    # Меняем IP прокси    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; WOW64; en-US) AppleWebKit/533.34 (KHTML, like Gecko) Chrome/53.0.3445.122 Safari/603.9 Edge/15.62649"
+    }
 
-        # Меняем IP прокси    
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; WOW64; en-US) AppleWebKit/533.34 (KHTML, like Gecko) Chrome/53.0.3445.122 Safari/603.9 Edge/15.62649"
-        }
+    url = Proxy().change_ip_url
+    data = requests.get(url, headers=headers)
 
-        url = Proxy().change_ip_url
-        data = requests.get(url, headers=headers)
-
-        if data.json().get('code') != 200:
-            raise Exception("Не удалось сменить IP прокси")
-    except Exception:
-        pass
+    if data.json().get('code') != 200:
+        raise Exception("Не удалось сменить IP прокси")    
 
 
 
