@@ -23,9 +23,19 @@ def _settings():
     }
 
 
-def run_script(path: str, task_id: int):
+def run_script(path: str, task_id: int):    
+    TaskLogs.create(
+        task_id=task_id, 
+        description=f"Task script start:{path}"
+    )
+
     cmd = [sys.executable, path, str(task_id)] if path.endswith(".py") else [path, str(task_id)]
     proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    TaskLogs.create(
+        task_id=task_id, 
+        description=f"Task script finish:{path}"
+    )
     return proc.returncode, (proc.stdout or ""), (proc.stderr or "")
 
 
@@ -57,9 +67,9 @@ def task_execute(self, task_id: int):
     t.step_status = StepStatus.RUNNING
     t.save()
 
-    path = scripts[t.step_index]
-    TaskLogs.create(task_id=t.id, description=f"start {t.step_index+1}/{t.steps_total}: {path}")
+    path = scripts[t.step_index]    
     code, out, err = run_script(path, t.id)
+
     if out:
         TaskLogs.create(task_id=t.id, description=out[:2000])
     if code != 0:

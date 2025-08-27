@@ -5,12 +5,13 @@ from proxy_manager.main import Proxy
 import requests
 
 
-def start(task_id):
+def start(task_id):    
     task = Task.get(id=task_id)
+    task.add_log(f"Start task ID:{task_id}")
     
     # Ищем подходящий номер телефона
     phone = get_registration_number()
-    task.add_log(f"select phone: {phone}")
+    task.add_log(f"Select phone: {phone}")
 
     # Создаем запись в базу данных
     task.phone_number = phone
@@ -23,9 +24,12 @@ def start(task_id):
 
     url = Proxy().change_ip_url
     data = requests.get(url, headers=headers)
+    task.add_log(f"Edit proxt IP")
 
     if data.json().get('code') != 200:
-        raise Exception("Не удалось сменить IP прокси")    
+        raise Exception("Не удалось сменить IP прокси")
+    
+    task.add_log(f"Finish task")
 
 
 
