@@ -1,9 +1,13 @@
 from database.models.task import Task, TaskLogs, StepStatus
-from scheduler.celery_app import celery_app
 from utils.task_logging import log_dashboard
+
+from pathlib import Path
+from datetime import datetime
+from PIL import Image
 
 import streamlit as st
 import pandas as pd
+import math
 import json
 import time
 
@@ -130,12 +134,57 @@ def logs_block(task_id: int):
         st.rerun()
 
 
-def image_block(task_id: int):
+def screenshot_block(task_id: int):
     task = Task.get(id=task_id)
     if not task:
         return
     
     st.subheader(f"🖼 Скриншоты задачи")
+
+    root = Path("/app/storage/screenshot") / str(task_id)
+    exts = {".png", ".jpg", ".jpeg", ".webp"}
+    files = [p for p in root.glob("*") if p.suffix.lower() in exts]
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
+    if not files:
+        st.info("Скриншотов пока нет")
+        return
+
+    col_ctrl = st.columns([1,1,2,2])
+    with col_ctrl[0]:
+        per_page = st.selectbox("На странице", [8, 12, 24, 48], index=1)
+    with col_ctrl[1]:
+        grid_cols = st.selectbox("В ряд", [2, 3, 4], index=2)
+    total = len(files)
+    pages = max(1, math.ceil(total / per_page))
+    with col_ctrl[2]:
+        st.write(f"Найдено: {total}")
+    with col_ctrl[3]:
+        page = st.number_input("Страница", min_value=1, max_value=pages, value=1)
+
+    start = (page - 1) * per_page
+    chunk = files[start:start + per_page]
+
+    cols = st.columns(grid_cols)
+    for i, p in enumerate(chunk):
+        with cols[i % grid_cols]:
+            ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            st.caption(f"{p.name} · {ts}")
+            img = Image.open(p)
+            st.image(img, use_container_width=True)
+            c1, c2 = st.columns(2)
+            with c1:
+                st.download_button("Скачать", data=p.read_bytes(), file_name=p.name, mime="image/png")
+            with c2:
+                if st.button("Открыть", key=f"open_{p.name}"):
+                    st.session_state["shot_preview"] = str(p)
+
+    if "shot_preview" in st.session_state:
+        p = Path(st.session_state["shot_preview"])
+        if p.exists():
+            st.markdown("---")
+            st.subheader(f"Предпросмотр: {p.name}")
+            st.image(Image.open(p), use_container_width=True)
 
 
 def render_task_details(task_id: int):
@@ -147,4 +196,4 @@ def render_task_details(task_id: int):
     table_block(task_id)
     button_block(task_id)
     logs_block(task_id)
-    image_block(task_id)
+    screenshot_block(task_id)

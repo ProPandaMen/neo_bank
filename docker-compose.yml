@@ -25,6 +25,7 @@ services:
     volumes:
       - .:/app
       - ./logs:/app/logs
+      - ./storage/screenshot:/app/storage/screenshot
     ports:
       - "8501:8501"
     depends_on:
@@ -43,6 +44,7 @@ services:
     volumes:
       - .:/app
       - ./logs:/app/logs
+      - ./storage/screenshot:/app/storage/screenshot
     depends_on:
       - redis
       - postgres
@@ -59,6 +61,7 @@ services:
     volumes:
       - .:/app
       - ./logs:/app/logs
+      - ./storage/screenshot:/app/storage/screenshot
     depends_on:
       - redis
       - postgres
@@ -84,6 +87,7 @@ services:
     volumes:
       - .:/app
       - ./logs:/app/logs
+      - ./storage/screenshot:/app/storage/screenshot
       - beat-state:/tmp
     depends_on:
       - redis
