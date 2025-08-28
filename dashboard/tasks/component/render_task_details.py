@@ -18,20 +18,22 @@ def table_block(task_id: int):
 
     data = {
         "ID": task.id,
-        "Время создания": str(task.created_at),
+        "Время создания": task.created_at,
         "Текущий шаг": task.step_index,
         "Всего шагов": task.steps_total,
-        "Статус": str(task.step_status),
+        "Статус": task.step_status,
         "Заблокировано кем": task.locked_by,
-        "Заблокировано до": str(task.locked_until),
-        "Начато в": str(task.step_started_at),
+        "Заблокировано до": task.locked_until,
+        "Начато в": task.step_started_at,
         "Попытки": task.step_attempts,
-        "Следующая попытка": str(task.next_attempt_at),
+        "Следующая попытка": task.next_attempt_at,
         "Последняя ошибка": task.last_error,
     }
 
     df = pd.DataFrame(list(data.items()), columns=["Параметр", "Значение"])
-    st.subheader(f"📋 Параметры задачи")
+    df["Значение"] = df["Значение"].apply(lambda x: "" if x is None else str(x))
+
+    st.subheader("📋 Параметры задачи")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 
