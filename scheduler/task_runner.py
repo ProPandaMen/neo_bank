@@ -29,6 +29,7 @@ def get_settings() -> dict:
 
 def run_script(path: str, task_id: int) -> Tuple[int, str, str]:
     cmd = [sys.executable, path, str(task_id)] if path.endswith(".py") else [path, str(task_id)]
+    print("RUN:", " ".join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True)
 
     return proc.returncode, (proc.stdout or ""), (proc.stderr or "")

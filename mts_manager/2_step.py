@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 def start(task_id, sleep_time=5, timeout=120):
     driver = get_driver()
+    print(f"Task ID: {task_id}")
     log_task(task_id, "старт", f"Старт шага 2, инициализация драйвера")
 
     task = Task.get(id=task_id)
