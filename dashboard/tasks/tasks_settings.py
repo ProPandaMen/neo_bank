@@ -4,7 +4,6 @@ import streamlit as st
 
 
 st.set_page_config(page_title="Task Scripts", layout="wide")
-st.title("⚙️ Скрипты задачи")
 
 ts = TaskSettings.get(name="default") or TaskSettings.create(name="default", scripts=[])
 scripts = list(ts.scripts or [])
@@ -14,21 +13,25 @@ scripts = list(ts.scripts or [])
 """
 st.subheader("Создание новых задач")
 
-current_enabled = bool(ts.planer_enabled)
-status_text = "Вкл" if current_enabled else "Выкл"
+planer_enabled = bool(ts.planer_enabled)
+options = {"Вкл": True, "Выкл": False}
 
-c1, c2 = st.columns([6, 1])
-with c1:
-    st.write(f"**Создание задач:** {status_text}")
-with c2:
-    if st.button("Изменить", use_container_width=True, key="toggle_create"):
-        ts.planer_enabled = not current_enabled
-        ts.save()
-        st.rerun()
+selected = st.selectbox(
+    "Статус", 
+    options.keys(), 
+    index=0 if planer_enabled else 1,
+    key="create_enabled_select"
+)
+
+if options[selected] != planer_enabled:
+    ts.planer_enabled = options[selected]
+    ts.save()
+    st.rerun()
 
 """
 # Настройка скриптов
 """
+st.title("⚙️ Скрипты задачи")
 st.subheader("Добавить скрипт")
 with st.form("add_script", clear_on_submit=True):
     col_inp, col_btn = st.columns([6, 1])
