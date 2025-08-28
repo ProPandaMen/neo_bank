@@ -42,11 +42,10 @@ def start(task_id):
         
         log_task(task_id, "завершение", "Шаг завершён")
     except Exception as e:
-        raise Exception(f"Ошибка на шаге 2:\n{e}")
-    finally:
         if phone:
             SMSManager().update_tag(phone, tag_name=None)
 
+        raise Exception(f"Ошибка на шаге 2:\n{e}")
 
 
 if __name__ == "__main__":
