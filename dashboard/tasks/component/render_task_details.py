@@ -141,7 +141,11 @@ def screenshot_block(task_id: int):
 
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
-    files = sorted([p for p in root.glob("*") if p.suffix.lower() in exts], key=lambda p: p.stat().st_mtime, reverse=True)
+    files = sorted(
+        [p for p in root.glob("*") if p.suffix.lower() in exts],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
 
     st.subheader("🖼 Скриншоты задачи")
     if not files:
@@ -154,41 +158,26 @@ def screenshot_block(task_id: int):
 
     n = len(files)
     i = st.session_state[key_idx] % n
-    li = (i - 1) % n
-    ri = (i + 1) % n
+    cp = files[i]
 
-    st.markdown(f"**{i+1}/{n}**")
+    st.markdown(f"**Найдено скриншотов: {n}**")
 
-    c1, c2, c3 = st.columns([1,2,1])
-
+    c1, c2, c3 = st.columns([1, 4, 1])
     with c1:
-        lp = files[li]
-        lts = datetime.fromtimestamp(lp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        st.caption(lts)
-        st.image(Image.open(lp), use_container_width=True)
         if st.button("←", use_container_width=True):
             st.session_state[key_idx] = (i - 1) % n
             st.rerun()
-
     with c2:
-        cp = files[i]
-        cts = datetime.fromtimestamp(cp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        st.caption(cts)
+        ts = datetime.fromtimestamp(cp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        st.caption(ts)
         st.image(Image.open(cp), use_container_width=True)
-        col_z1, col_z2, col_z3 = st.columns([1,2,1])
-        with col_z2:
-            if st.button("🔍 Увеличить", use_container_width=True):
-                @st.dialog(f"Просмотр: {cp.name}", width="large")
-                def _dlg():
-                    st.image(Image.open(cp), use_container_width=True)
-                    st.button("Закрыть", use_container_width=True)
-                _dlg()
-
+        if st.button("🔍 Увеличить", use_container_width=True):
+            @st.dialog(f"Просмотр: {cp.name}", width="large")
+            def _dlg():
+                st.image(Image.open(cp), use_container_width=True)
+                st.button("Закрыть", use_container_width=True)
+            _dlg()
     with c3:
-        rp = files[ri]
-        rts = datetime.fromtimestamp(rp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        st.caption(rts)
-        st.image(Image.open(rp), use_container_width=True)
         if st.button("→", use_container_width=True):
             st.session_state[key_idx] = (i + 1) % n
             st.rerun()
