@@ -35,10 +35,10 @@ PROXY_CHANGE_IP_URL = os.getenv("PROXY_CHANGE_IP_URL")
 """
 # Temp files
 """
-SCREENSHOT_DIR = WORKDIR / os.getenv("SCREENSHOT_DIR")
-SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
-CHROME_PROFILE_DIR = WORKDIR / os.getenv("CHROME_PROFILE_DIR")
-CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+SCREENSHOT_DIR = f'{WORKDIR}{os.getenv("SCREENSHOT_DIR")}'
+os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+CHROME_PROFILE_DIR = f'{WORKDIR}{os.getenv("CHROME_PROFILE_DIR")}'
+os.makedirs(CHROME_PROFILE_DIR, exist_ok=True)
 
 
 """
