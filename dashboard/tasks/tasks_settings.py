@@ -14,7 +14,7 @@ scripts = list(ts.scripts or [])
 """
 st.subheader("Создание новых задач")
 
-current_enabled = bool(getattr(ts, "create_enabled", True))
+current_enabled = bool(ts.planer_enabled)
 status_text = "Вкл" if current_enabled else "Выкл"
 
 c1, c2 = st.columns([6, 1])
@@ -22,7 +22,7 @@ with c1:
     st.write(f"**Создание задач:** {status_text}")
 with c2:
     if st.button("Изменить", use_container_width=True, key="toggle_create"):
-        ts.create_enabled = not current_enabled
+        ts.planer_enabled = not current_enabled
         ts.save()
         st.rerun()
 
