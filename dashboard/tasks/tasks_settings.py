@@ -4,13 +4,13 @@ import streamlit as st
 
 
 def task_setting_field(ts):
-    st.subheader("Создание новых задач")
+    st.subheader("⚙️ Настройки задач")
 
     planer_enabled = bool(ts.planer_enabled)
     options = {"Вкл": True, "Выкл": False}
 
     selected = st.selectbox(
-        "Статус", 
+        "Создание новых задач", 
         options.keys(), 
         index=0 if planer_enabled else 1,
         key="create_enabled_select"
@@ -22,7 +22,7 @@ def task_setting_field(ts):
         st.rerun()
 
 def task_setting_scripts(ts, scripts):
-    st.title("⚙️ Скрипты задачи")
+    st.title("🎻 Скрипты задачи")
     st.subheader("Добавить скрипт")
     with st.form("add_script", clear_on_submit=True):
         col_inp, col_btn = st.columns([6, 1])
