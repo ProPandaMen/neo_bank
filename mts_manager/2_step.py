@@ -45,6 +45,9 @@ def start(task_id, sleep_time=5, timeout=120):
             )
         )
         WebDriverWait(driver, sleep_time)
+    except Exception as e:
+        raise Exception(f"Ошибка на шаге 2: {e}")
+
     finally:
         # Закрываем драйвер
         driver.quit()

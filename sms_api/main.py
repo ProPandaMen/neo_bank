@@ -111,10 +111,10 @@ class SMSManager:
         data = response.json()
         return data.get("messages", [])
     
-    def update_tag(self, phone_numer, tag_name="bot"):
+    def update_tag(self, phone_number, tag_name="bot"):
         url = "http://95.179.248.237/api/phones/update"
         data = {
-            "phone_number": phone_numer,
+            "phone_number": phone_number,
             "tag_name": tag_name
         }
         response = requests.post(url, data=data)
