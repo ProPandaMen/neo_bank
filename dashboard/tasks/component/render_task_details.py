@@ -1,13 +1,12 @@
 from database.models.task import Task, TaskLogs, StepStatus
 from utils.task_logging import log_dashboard
-from urllib.parse import quote
 
 from config import SCREENSHOT_DIR
 from pathlib import Path
 from datetime import datetime
 from PIL import Image
 
-import streamlit.components.v1 as components
+from streamlit_carousel import carousel
 import streamlit as st
 import pandas as pd
 import base64
@@ -17,17 +16,6 @@ import time
 
 
 UPDATE_INTERVAL = 5
-
-
-def _img_b64(p: Path) -> str:
-    return base64.b64encode(p.read_bytes()).decode("ascii")
-
-def _mime(p: Path) -> str:
-    s = p.suffix.lower()
-    if s in {".jpg", ".jpeg"}: return "image/jpeg"
-    if s == ".png": return "image/png"
-    if s == ".webp": return "image/webp"
-    return "application/octet-stream"
 
 
 def table_block(task_id: int):
@@ -158,62 +146,28 @@ def screenshot_block(task_id: int):
 
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
-    files = [p for p in root.glob("*") if p.suffix.lower() in exts]
-    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-
+    files = sorted([p for p in root.glob("*") if p.suffix.lower() in exts], key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
         st.info("Скриншотов пока нет")
         return
 
-    page_size = 3
-    total = len(files)
-    pages = max(1, math.ceil(total / page_size))
-    if "shot_page" not in st.session_state:
-        st.session_state.shot_page = 1
+    items = []
+    for p in files:
+        ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        items.append(dict(title=p.name, text=ts, img=str(p)))
 
-    col_nav = st.columns([1, 4, 1])
-    with col_nav[0]:
-        if st.button("←", use_container_width=True):
-            st.session_state.shot_page = pages if st.session_state.shot_page <= 1 else st.session_state.shot_page - 1
-    with col_nav[1]:
-        st.write(f"Страница {st.session_state.shot_page} из {pages} · Найдено: {total}")
-    with col_nav[2]:
-        if st.button("→", use_container_width=True):
-            st.session_state.shot_page = 1 if st.session_state.shot_page >= pages else st.session_state.shot_page + 1
+    idx = carousel(items=items)
 
-    start = (st.session_state.shot_page - 1) * page_size
-    chunk = files[start:start + page_size]
-
-    cols = st.columns(len(chunk))
-    clicked_name = None
-    for i, p in enumerate(chunk):
-        with cols[i]:
-            ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-            st.caption(f"{p.name} · {ts}")
-            src = f"data:{_mime(p)};base64,{_img_b64(p)}"
-            html = f"""
-            <div style="position:relative; width:100%; cursor:pointer; border-radius:12px; overflow:hidden;">
-              <img src="{src}" style="width:100%; height:auto; display:block;" onclick="window.parent.postMessage({{'type':'streamlit:setComponentValue','value':'{quote(p.name)}'}}, '*')" />
-            </div>
-            """
-            val = components.html(html, height=10, scrolling=False, key=f"shot_{p.name}")
-            if val:
-                clicked_name = val
-
-    if clicked_name:
-        target = next((pp for pp in files if pp.name == clicked_name), None)
-        if target and target.exists():
-            st.session_state["shot_preview"] = str(target)
-
-    if "shot_preview" in st.session_state:
-        p = Path(st.session_state["shot_preview"])
-        if p.exists():
-            @st.dialog(f"Просмотр: {p.name}", width="large")
-            def _dlg():
-                st.image(Image.open(p), use_container_width=True)
-                if st.button("Закрыть", use_container_width=True):
-                    st.session_state.pop("shot_preview", None)
-            _dlg()
+    if isinstance(idx, int) and 0 <= idx < len(files):
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            if st.button("🔍 Увеличить", use_container_width=True):
+                target = files[idx]
+                @st.dialog(f"Просмотр: {target.name}", width="large")
+                def _dlg():
+                    st.image(Image.open(target), use_container_width=True)
+                    st.button("Закрыть", use_container_width=True)
+                _dlg()
 
 
 def render_task_details(task_id: int):
