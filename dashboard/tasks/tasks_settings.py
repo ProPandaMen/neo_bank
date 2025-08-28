@@ -4,7 +4,7 @@ import streamlit as st
 
 
 def task_setting_field(ts):
-    st.subheader("⚙️ Настройки задач")
+    st.title("⚙️ Настройки задач")
 
     planer_enabled = bool(ts.planer_enabled)
     options = {"Вкл": True, "Выкл": False}

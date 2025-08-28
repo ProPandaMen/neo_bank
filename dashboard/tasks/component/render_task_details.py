@@ -11,13 +11,33 @@ import time
 UPDATE_INTERVAL = 5
 
 
-def render_task_details(task_id: int):
-    cols = st.columns(2)
-    if cols[0].button("← Все задачи"):
-        st.query_params.pop("task_id", None)
-        st.rerun()
+def table_block(task_id: int):
+    task = Task.get(id=task_id)
+    if not task:
+        st.error("Задача не найдена")
+        return
 
+    rows = [
+        ["ID", task.id],
+        ["Статус", str(task.step_status)],
+        ["Шаг", f"{task.step_index + 1}/{task.steps_total}"],
+        ["Попытки", task.step_attempts],
+        ["Ошибка", task.last_error],
+        ["Заблокировано до", str(task.locked_until)],
+        ["Заблокировано кем", task.locked_by],
+        ["Начато в", str(task.step_started_at)],
+        ["Следующая попытка", str(task.next_attempt_at)],
+        ["Создано", str(task.created_at)],
+        ["Обновлено", str(task.updated_at)],
+    ]
+
+    st.subheader(f"📋 Параметры задачи #{task.id}")
+    st.table(rows)
+
+
+def button_block(task_id: int):
     act_cols = st.columns(2)
+
     if act_cols[0].button("🧹 Очистить логи"):
         TaskLogs.delete_where(where=[TaskLogs.task_id == task_id])
         log_dashboard(task_id, "логи", "Очищены через дашборд")
@@ -49,6 +69,16 @@ def render_task_details(task_id: int):
             st.rerun()
         else:
             st.error("Задача не найдена")
+
+
+def render_task_details(task_id: int):
+    cols = st.columns(2)
+    if cols[0].button("← Все задачи"):
+        st.query_params.pop("task_id", None)
+        st.rerun()
+
+    table_block(task_id)
+    button_block(task_id)
 
     st.subheader(f"🧾 Логи задачи #{task_id}")
 

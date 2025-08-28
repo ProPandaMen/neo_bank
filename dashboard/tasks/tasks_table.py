@@ -26,24 +26,20 @@ def render_title(task_id: int | None):
         st.title("📋 Задачи")
 
 def render_tasks_table():
-    tasks = Task.all()
-    if not tasks:
+    tasks_list = Task.all()
+
+    if not tasks_list:
         st.info("Пока нет данных")
         return
 
     data = []
-    for t in tasks:
-        pct = 0 if (t.steps_total or 0) == 0 else int(
-            round((min(t.step_index + 1, t.steps_total) / max(t.steps_total, 1)) * 100)
-        )
-
+    for task in tasks_list:
         data.append({
-            "ID": t.id,
-            "Создано": t.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            "Шаг": f"{t.step_index + 1}/{t.steps_total}",
-            "Прогресс": f"{pct}%",
-            "Статус": status_map.get(t.step_status, ""),
-            "Подробнее": f"/tasks_table?task_id={t.id}",
+            "ID": task.id,
+            "Создано": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "Шаг": f"{task.step_index + 1}/{task.steps_total}",
+            "Статус": status_map.get(task.step_status, ""),
+            "Подробнее": f"/tasks_table?task_id={task.id}",
         })
 
     df = pd.DataFrame(data)
