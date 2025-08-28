@@ -141,11 +141,8 @@ def screenshot_block(task_id: int):
 
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
-    files = sorted(
-        [p for p in root.glob("*") if p.suffix.lower() in exts],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+    files = sorted([p for p in root.glob("*") if p.suffix.lower() in exts],
+                   key=lambda p: p.stat().st_mtime, reverse=True)
 
     st.subheader("🖼 Скриншоты задачи")
     if not files:
@@ -162,13 +159,26 @@ def screenshot_block(task_id: int):
 
     st.markdown(f"**Найдено скриншотов: {n}**")
 
-    c1, c2, c3 = st.columns([1, 4, 1])
+    ts = datetime.fromtimestamp(cp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+
+    c1, c2, c3 = st.columns([1,6,1])
+
     with c1:
-        if st.button("←", use_container_width=True):
+        st.markdown(
+            """
+            <div style="display:flex; align-items:center; height:100%;">
+                <form action="#" method="post">
+                    <button style="width:100%; padding:12px; font-size:20px;">←</button>
+                </form>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        if st.button("prev", key=f"prev_{task_id}", label_visibility="collapsed"):
             st.session_state[key_idx] = (i - 1) % n
             st.rerun()
+
     with c2:
-        ts = datetime.fromtimestamp(cp.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
         st.caption(ts)
         st.image(Image.open(cp), use_container_width=True)
         if st.button("🔍 Увеличить", use_container_width=True):
@@ -177,8 +187,19 @@ def screenshot_block(task_id: int):
                 st.image(Image.open(cp), use_container_width=True)
                 st.button("Закрыть", use_container_width=True)
             _dlg()
+
     with c3:
-        if st.button("→", use_container_width=True):
+        st.markdown(
+            """
+            <div style="display:flex; align-items:center; height:100%;">
+                <form action="#" method="post">
+                    <button style="width:100%; padding:12px; font-size:20px;">→</button>
+                </form>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        if st.button("next", key=f"next_{task_id}", label_visibility="collapsed"):
             st.session_state[key_idx] = (i + 1) % n
             st.rerun()
 
