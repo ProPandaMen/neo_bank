@@ -109,8 +109,7 @@ def start(task_id, sleep_time=20):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("task_id", type=int)
-    parser.add_argument("--sleep", type=int, default=5)
-    parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument("--sleep", type=int, default=20)
     args = parser.parse_args()
 
-    start(args.task_id, sleep_time=args.sleep, timeout=args.timeout)
+    start(args.task_id, sleep_time=args.sleep)
