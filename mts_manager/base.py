@@ -61,7 +61,7 @@ def get_driver():
     driver = Chrome(
         options=opts,
         seleniumwire_options=sw_options,
-        version_main=112,
+        # version_main=112,
     )
 
     return driver
