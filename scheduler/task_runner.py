@@ -1,17 +1,13 @@
 from typing import Tuple, Optional
 from scheduler.celery_app import celery_app
 
-from celery.utils.log import get_task_logger
 from utils.task_logging import log_celery
 
-from database.models.task import Task, TaskLogs, StepStatus, TaskSettings
+from database.models.task import Task, StepStatus, TaskSettings
 
 import subprocess
 import datetime
 import sys
-
-
-logger = get_task_logger(__name__)
 
 
 def get_settings() -> dict:
@@ -29,7 +25,6 @@ def get_settings() -> dict:
 
 def run_script(path: str, task_id: int) -> Tuple[int, str, str]:
     cmd = [sys.executable, path, str(task_id)] if path.endswith(".py") else [path, str(task_id)]
-    print("RUN:", " ".join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True)
 
     return proc.returncode, (proc.stdout or ""), (proc.stderr or "")
@@ -58,10 +53,8 @@ def unlock_task(t: Task) -> None:
 
 def record_streams(task_id: int, out: str, err: str) -> None:
     if out:
-        TaskLogs.create(task_id=task_id, description=out)
         log_celery(task_id, "stdout", out)
     if err:
-        TaskLogs.create(task_id=task_id, description=err)
         log_celery(task_id, "stderr", err)
 
 
@@ -81,8 +74,6 @@ def handle_failure(t: Task, code: int, err: str, cfg: dict, now: datetime.dateti
     unlock_task(t)
     log_celery(t.id, "ошибка", f"Код {code}. Попытка {t.step_attempts}. Повтор через {delay}с")
 
-    logger.info(f"❌ Завершение task_execute с ошибкой (код {code}, попытка {t.step_attempts})")
-
     return f"error:{code}"
 
 
@@ -94,11 +85,9 @@ def handle_success(t: Task, path: str) -> None:
 
     if t.step_index >= t.steps_total:
         t.step_status = StepStatus.SUCCESS
-        TaskLogs.create(task_id=t.id, description="finished")
         log_celery(t.id, "завершение", "Все шаги выполнены успешно")
     else:
         t.step_status = StepStatus.WAITING
-        TaskLogs.create(task_id=t.id, description=f"done: {path}")
         log_celery(t.id, "выполнение", f"Завершён шаг: {path}. Следующий {t.step_index+1}/{t.steps_total}")
 
     unlock_task(t)

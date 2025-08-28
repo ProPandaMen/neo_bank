@@ -62,6 +62,15 @@ services:
     depends_on:
       - redis
       - postgres
+    shm_size: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
 
   celery-beat:
     build:
