@@ -13,23 +13,33 @@ def _settings():
     if not ts:
         ts = TaskSettings.create(name="default", scripts=[])
 
-    parallel_limit = getattr(ts, "parallel_limit", 1) or 1
-    create_batch = getattr(ts, "create_batch", 1) or 1
+    parallel_limit = int(getattr(ts, "parallel_limit", 1) or 1)
+    create_batch = int(getattr(ts, "create_batch", 1) or 1)
     scripts = list(ts.scripts or [])
+    planer_enabled = bool(getattr(ts, "planer_enabled", False))
 
-    return scripts, int(parallel_limit), int(create_batch)
+    return scripts, parallel_limit, create_batch, planer_enabled
 
 
 @celery_app.task(name="scheduler.planner")
 def planer():
     logger.info("Start planner")
 
-    scripts, parallel_limit, create_batch = _settings()
+    scripts, parallel_limit, create_batch, planer_enabled = _settings()
     running = Task.filter(step_status=StepStatus.RUNNING)
     capacity = max(0, parallel_limit - len(running))
     started = 0
     retried = 0
     created = 0
+
+    if not planer_enabled:
+        return {
+            "started": started, 
+            "retried": retried, 
+            "created": created, 
+            "parallel_limit": parallel_limit,
+            "planer_enabled": planer_enabled
+        }
 
     if capacity > 0:
         ready = Task.filter_ex(where=[and_(Task.step_index < Task.steps_total, Task.step_status == StepStatus.WAITING)], order_by=Task.created_at.asc(), limit=capacity)
@@ -58,5 +68,6 @@ def planer():
         "started": started, 
         "retried": retried, 
         "created": created, 
-        "parallel_limit": parallel_limit
+        "parallel_limit": parallel_limit,
+        "planer_enabled": planer_enabled
     }

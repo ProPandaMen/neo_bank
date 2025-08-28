@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Float, JSON, Enum as EnumType
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Float, Boolean, JSON, Enum as EnumType
 from sqlalchemy import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.mutable import MutableList
@@ -81,6 +81,8 @@ class TaskSettings(Base, BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(128), unique=True, nullable=False, index=True)
     scripts = Column(MutableList.as_mutable(JSON), nullable=False, default=list)
+
+    planer_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
 
     parallel_limit = Column(Integer, nullable=False, default=1, server_default="1")
     create_batch = Column(Integer, nullable=False, default=1, server_default="1")
