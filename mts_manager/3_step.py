@@ -19,9 +19,8 @@ def start(task_id, sleep_time=20):
         raise Exception(f"Отсутствует задача ID {task_id}")    
     log_task(task_id, "загрузка данных", f"Задача #{task_id}, номер: {task.phone_number}")
 
-    driver = get_driver()
+    driver = get_driver(task_id)
     log_task(task_id, "инициализация", "Драйвер запущен")
-
 
     try:
         # Заходим на сайт

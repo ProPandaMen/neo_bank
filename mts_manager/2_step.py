@@ -19,7 +19,7 @@ def start(task_id, sleep_time=5, timeout=120):
     log_task(task_id, "загрузка данных", f"Задача #{task_id}, номер: {task.phone_number}")
 
     # Инициализация драйвера
-    driver = get_driver()
+    driver = get_driver(task_id)
     log_task(task_id, "старт", f"Старт шага 2, инициализация драйвера")
 
     try:
