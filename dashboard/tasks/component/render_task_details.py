@@ -17,22 +17,23 @@ def table_block(task_id: int):
         st.error("Задача не найдена")
         return
 
-    rows = [
-        ["ID", task.id],
-        ["Время создания", str(task.created_at)],
-        ["Текущий шаг", task.step_index],
-        ["Всего шагов", task.steps_total],
-        ["Статус", str(task.step_status)],
-        ["Заблокировано кем", task.locked_by],
-        ["Заблокировано до", str(task.locked_until)],
-        ["Начато в", str(task.step_started_at)],
-        ["Попытки", task.step_attempts],
-        ["Следующая попытка", str(task.next_attempt_at)],
-        ["Последняя ошибка", task.last_error],
-    ]
+    data = {
+        "ID": task.id,
+        "Время создания": str(task.created_at),
+        "Текущий шаг": task.step_index,
+        "Всего шагов": task.steps_total,
+        "Статус": str(task.step_status),
+        "Заблокировано кем": task.locked_by,
+        "Заблокировано до": str(task.locked_until),
+        "Начато в": str(task.step_started_at),
+        "Попытки": task.step_attempts,
+        "Следующая попытка": str(task.next_attempt_at),
+        "Последняя ошибка": task.last_error,
+    }
 
+    df = pd.DataFrame(list(data.items()), columns=["Параметр", "Значение"])
     st.subheader(f"📋 Параметры задачи #{task.id}")
-    st.table(rows)
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 
 def button_block(task_id: int):
