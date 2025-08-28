@@ -1,6 +1,7 @@
 from database.models.task import Task, TaskLogs, StepStatus
 from utils.task_logging import log_dashboard
 
+from config import SCREENSHOT_DIR
 from pathlib import Path
 from datetime import datetime
 from PIL import Image
@@ -140,8 +141,8 @@ def screenshot_block(task_id: int):
         return
     
     st.subheader(f"🖼 Скриншоты задачи")
-
-    root = Path("/app/storage/screenshot") / str(task_id)
+    
+    root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
     files = [p for p in root.glob("*") if p.suffix.lower() in exts]
     files.sort(key=lambda p: p.stat().st_mtime, reverse=True)

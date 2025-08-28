@@ -59,6 +59,7 @@ def start(task_id, sleep_time=20):
         try:
             time.sleep(sleep_time)
             log_task(task_id, "интерфейс", "Попытка закрыть рекламу")
+            save_task_screenshot(driver, task_id, "step_3_6_1.png")
             wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
             WebDriverWait(driver, sleep_time)
             save_task_screenshot(driver, task_id, "step_3_6.png")
@@ -111,7 +112,6 @@ def start(task_id, sleep_time=20):
         log_task(task_id, "завершение", "Шаг 3 выполнен успешно")
     except Exception as e:
         log_task(task_id, "ошибка", f"Ошибка на шаге 3: {e}")
-        raise Exception(f"Ошибка на шаге 3:\n{e}")
     finally:
         # Закрываем драйвер
         driver.quit()

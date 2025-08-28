@@ -14,7 +14,8 @@ CELERY_BACKEND_URL = os.getenv("CELERY_BACKEND_URL")
 """
 # DATABASE
 """
-DATABASE_URL = os.getenv("DATABASE_URL")
+LOCAL_DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
+DOCKER_DATABASE_URL = os.getenv("DOCKER_DATABASE_URL")
 
 
 """
@@ -26,6 +27,15 @@ PROXY_PORT = int(os.getenv("PROXY_PORT"))
 PROXY_USERNAME = os.getenv("PROXY_USERNAME")
 PROXY_PASSWORD = os.getenv("PROXY_PASSWORD")
 PROXY_CHANGE_IP_URL = os.getenv("PROXY_CHANGE_IP_URL")
+
+
+"""
+# Temp files
+"""
+SCREENSHOT_DIR = os.getenv("SCREENSHOT_DIR")
+os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+CHROME_PROFILE_DIR = os.getenv("CHROME_PROFILE_DIR")
+os.makedirs(CHROME_PROFILE_DIR, exist_ok=True)
 
 
 """
