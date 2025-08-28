@@ -21,7 +21,7 @@ def _settings():
     return scripts, parallel_limit, create_batch, planer_enabled
 
 
-@celery_app.task(name="scheduler.planner")
+@celery_app.task(name="scheduler.task_planner")
 def planer():
     logger.info("Start planner")
 
