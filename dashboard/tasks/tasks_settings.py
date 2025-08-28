@@ -9,6 +9,14 @@ st.title("⚙️ Скрипты задачи")
 ts = TaskSettings.get(name="default") or TaskSettings.create(name="default", scripts=[])
 scripts = list(ts.scripts or [])
 
+st.subheader("Создание новых задач")
+current_enabled = bool(getattr(ts, "create_enabled", True))
+enabled = st.toggle("Включить автосоздание", value=current_enabled, key="create_enabled_toggle")
+if enabled != current_enabled:
+    ts.create_enabled = enabled
+    ts.save()
+    st.rerun()
+
 st.subheader("Добавить скрипт")
 with st.form("add_script", clear_on_submit=True):
     col_inp, col_btn = st.columns([6, 1])
@@ -57,3 +65,4 @@ else:
         ts.scripts = scripts
         ts.save()
         st.rerun()
+
