@@ -1,12 +1,13 @@
 from database.models.task import Task, TaskLogs, StepStatus
 from utils.task_logging import log_dashboard
-from urllib.parse import urlencode, quote
+from urllib.parse import quote
 
 from config import SCREENSHOT_DIR
 from pathlib import Path
 from datetime import datetime
 from PIL import Image
 
+import streamlit.components.v1 as components
 import streamlit as st
 import pandas as pd
 import base64
@@ -152,9 +153,9 @@ def screenshot_block(task_id: int):
     task = Task.get(id=task_id)
     if not task:
         return
-    
+
     st.subheader("🖼 Скриншоты задачи")
-    
+
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
     files = [p for p in root.glob("*") if p.suffix.lower() in exts]
@@ -184,30 +185,34 @@ def screenshot_block(task_id: int):
     chunk = files[start:start + page_size]
 
     cols = st.columns(len(chunk))
+    clicked_name = None
     for i, p in enumerate(chunk):
         with cols[i]:
             ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
             st.caption(f"{p.name} · {ts}")
             src = f"data:{_mime(p)};base64,{_img_b64(p)}"
-            qp = dict(st.query_params)
-            qs = urlencode(qp, doseq=True)
-            href = f"?{qs}&open={quote(p.name)}" if qs else f"?open={quote(p.name)}"
-            st.markdown(f'<a href="{href}"><img src="{src}" style="width:100%;height:auto;border-radius:12px;display:block"/></a>', unsafe_allow_html=True)
+            html = f"""
+            <div style="position:relative; width:100%; cursor:pointer; border-radius:12px; overflow:hidden;">
+              <img src="{src}" style="width:100%; height:auto; display:block;" onclick="window.parent.postMessage({{'type':'streamlit:setComponentValue','value':'{quote(p.name)}'}}, '*')" />
+            </div>
+            """
+            val = components.html(html, height=10, scrolling=False, key=f"shot_{p.name}")
+            if val:
+                clicked_name = val
 
-    q = st.query_params
-    if "open" in q:
-        name = q.get("open")
-        target = next((pp for pp in files if pp.name == name), None)
+    if clicked_name:
+        target = next((pp for pp in files if pp.name == clicked_name), None)
         if target and target.exists():
-            @st.dialog(f"Просмотр: {target.name}", width="large")
+            st.session_state["shot_preview"] = str(target)
+
+    if "shot_preview" in st.session_state:
+        p = Path(st.session_state["shot_preview"])
+        if p.exists():
+            @st.dialog(f"Просмотр: {p.name}", width="large")
             def _dlg():
-                st.image(Image.open(target), use_container_width=True)
+                st.image(Image.open(p), use_container_width=True)
                 if st.button("Закрыть", use_container_width=True):
-                    qp = dict(st.query_params)
-                    qp.pop("open", None)
-                    st.query_params.clear()
-                    for k, v in qp.items():
-                        st.query_params[k] = v
+                    st.session_state.pop("shot_preview", None)
             _dlg()
 
 
