@@ -4,15 +4,19 @@ from selenium.webdriver.common.by import By
 
 from database.models.task import Task
 from mts_manager.base import wait_click, wait_visible, get_driver
+from celery.utils.log import get_task_logger
 from sms_api.main import wait_sms_code
 from utils.task_logging import log_task
 
 from datetime import datetime, timezone
 
 
+logger = get_task_logger(__name__)
+
+
 def start(task_id, sleep_time=5, timeout=120):
-    driver = get_driver()
-    print(f"Task ID: {task_id}")
+    driver = get_driver()    
+    logger.info(f"Start Task ID {task_id} step 2")
     log_task(task_id, "старт", f"Старт шага 2, инициализация драйвера")
 
     task = Task.get(id=task_id)
