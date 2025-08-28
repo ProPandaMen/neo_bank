@@ -4,14 +4,12 @@ from selenium.webdriver.common.by import By
 
 from database.models.task import Task
 from mts_manager.base import wait_click, wait_visible, get_driver
-from celery.utils.log import get_task_logger
 from sms_api.main import wait_sms_code
 from utils.task_logging import log_task
 
 from datetime import datetime, timezone
 
-
-logger = get_task_logger(__name__)
+import argparse
 
 
 def start(task_id, sleep_time=5, timeout=120):
@@ -20,6 +18,7 @@ def start(task_id, sleep_time=5, timeout=120):
         raise Exception(f"Отсутствует задача ID {task_id}")    
     log_task(task_id, "загрузка данных", f"Задача #{task_id}, номер: {task.phone_number}")
 
+    # Инициализация драйвера
     driver = get_driver()
     log_task(task_id, "старт", f"Старт шага 2, инициализация драйвера")
 
@@ -73,4 +72,10 @@ def start(task_id, sleep_time=5, timeout=120):
 
 
 if __name__ == "__main__":
-    start(2)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("task_id", type=int)
+    parser.add_argument("--sleep", type=int, default=5)
+    parser.add_argument("--timeout", type=int, default=120)
+    args = parser.parse_args()
+
+    start(args.task_id, sleep_time=args.sleep, timeout=args.timeout)

@@ -5,6 +5,7 @@ from sms_api.main import SMSManager
 from sms_api.main import get_registration_number
 from utils.task_logging import log_task
 
+import argparse
 import requests
 
 
@@ -49,4 +50,8 @@ def start(task_id):
 
 
 if __name__ == "__main__":
-    start(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("task_id", type=int)
+    args = parser.parse_args()
+    
+    start(args.task_id)
