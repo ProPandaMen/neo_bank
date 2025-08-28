@@ -1,9 +1,7 @@
 from celery import Celery
-from celery.signals import after_setup_logger
 
 from kombu import Queue
 from config import CELERY_BROKER_URL, CELERY_BACKEND_URL
-from scheduler import logging_config
 
 
 celery_app = Celery(
@@ -15,14 +13,14 @@ celery_app = Celery(
 celery_app.conf.update(
     task_queues=(Queue("scheduler"), Queue("executor")),
     task_default_queue="scheduler",
-    include=["scheduler.planner", "scheduler.task_runner"],
+    include=["scheduler.task_planner", "scheduler.task_runner"],
     task_routes={
-        "scheduler.planner": {"queue": "scheduler"},
+        "scheduler.task_planner": {"queue": "scheduler"},
         "scheduler.task_execute": {"queue": "executor"},
     },
     beat_schedule={
         "planner-tick": {
-            "task": "scheduler.planner",
+            "task": "scheduler.task_planner",
             "schedule": 10.0,
         },
     }
@@ -38,7 +36,3 @@ celery_app.conf.update(
     worker_redirect_stdouts=True,
     worker_redirect_stdouts_level="INFO",
 )
-
-@after_setup_logger.connect
-def _apply_logging(*args, **kwargs):
-    pass

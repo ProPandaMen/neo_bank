@@ -14,7 +14,6 @@ UPDATE_INTERVAL = 5
 def table_block(task_id: int):
     task = Task.get(id=task_id)
     if not task:
-        st.error("Задача не найдена")
         return
 
     data = {
@@ -37,39 +36,43 @@ def table_block(task_id: int):
 
 
 def button_block(task_id: int):
-    act_cols = st.columns(2)
+    task = Task.get(id=task_id)
+    if not task:
+        return
+    
+    col1, col2, col3 = st.columns(3)
 
-    if act_cols[0].button("🧹 Очистить логи"):
-        TaskLogs.delete_where(where=[TaskLogs.task_id == task_id])
-        log_dashboard(task_id, "логи", "Очищены через дашборд")
-        st.success("Логи очищены")
-        st.rerun()
+    with col1:
+        if st.button("🧹 Очистить логи", use_container_width=True):
+            TaskLogs.delete_where(where=[TaskLogs.task_id == task_id])
+            log_dashboard(task_id, "логи", "Очищены через дашборд")
+            st.success("Логи очищены")
 
-    if act_cols[1].button("🔁 Перезапустить задачу"):
-        tt = Task.get(id=task_id)
-        if tt:
-            log_dashboard(task_id, "перезапуск", "Инициирован через дашборд")
-            tt.step_index = 0
-            tt.step_attempts = 0
-            tt.next_attempt_at = None
-            tt.last_error = None
-            tt.locked_by = None
-            tt.locked_until = None
-            tt.step_started_at = None
-            tt.step_status = StepStatus.WAITING
-            tt.save()
-            
-            try:
-                celery_app.send_task("scheduler.task_execute", args=[tt.id], queue="executor")                
-                log_dashboard(task_id, "перезапуск", "Отправлен в очередь executor")
-
-                st.success(f"Задача #{tt.id} перезапущена")
-            except Exception as e:
-                log_dashboard(task_id, "перезапуск", f"Ошибка отправки: {e}")
-                st.error(f"Ошибка перезапуска: {e}")
             st.rerun()
-        else:
-            st.error("Задача не найдена")
+
+    with col2:
+        if st.button("🔁 Перезапустить шаг", use_container_width=True):
+            task.step_status = StepStatus.WAITING
+            task.locked_by = None
+            task.locked_until = None
+            task.save()
+
+            st.rerun()
+
+    with col3:
+        if st.button("⚠️ Перезапустить задачу", use_container_width=True):                    
+            log_dashboard(task_id, "перезапуск", "Инициирован через дашборд")
+            task.step_index = 0
+            task.step_attempts = 0
+            task.next_attempt_at = None
+            task.last_error = None
+            task.locked_by = None
+            task.locked_until = None
+            task.step_started_at = None
+            task.step_status = StepStatus.WAITING
+            task.save()
+
+            st.rerun()
 
 
 def render_task_details(task_id: int):
