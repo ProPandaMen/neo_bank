@@ -9,35 +9,44 @@ import requests
 
 
 def start(task_id):
-    task = Task.get(id=task_id)
-    log_task(task_id, "старт", f"Старт задачи #{task_id}")
-    
-    # Ищем подходящий номер телефона
-    phone = get_registration_number(task_id)
-    log_task(task_id, "поиск номера", f"Выбран номер: {phone}")
+    phone = None
 
-    SMSManager().update_tag(phone)
-    log_task(task_id, "обновления тега", f"Тег обновлен: {phone}")
+    try:
+        task = Task.get(id=task_id)
+        log_task(task_id, "старт", f"Старт задачи #{task_id}")
+        
+        # Ищем подходящий номер телефона
+        phone = get_registration_number(task_id)
+        log_task(task_id, "поиск номера", f"Выбран номер: {phone}")
 
-    # Создаем запись в базу данных
-    task.phone_number = phone
-    task.save()
-    log_task(task_id, "сохранение данных", "Номер сохранён")
+        SMSManager().update_tag(phone)
+        log_task(task_id, "обновления тега", f"Тег обновлен: {phone}")
 
-    # Меняем IP прокси    
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; WOW64; en-US) AppleWebKit/533.34 (KHTML, like Gecko) Chrome/53.0.3445.122 Safari/603.9 Edge/15.62649"
-    }
+        # Создаем запись в базу данных
+        task.phone_number = phone
+        task.save()
+        log_task(task_id, "сохранение данных", "Номер сохранён")
 
-    url = Proxy().change_ip_url
-    data = requests.get(url, headers=headers)
-    log_task(task_id, "смена ip", "Запрос на смену IP отправлен")
+        # Меняем IP прокси    
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; WOW64; en-US) AppleWebKit/533.34 (KHTML, like Gecko) Chrome/53.0.3445.122 Safari/603.9 Edge/15.62649"
+        }
 
-    if data.json().get('code') != 200:
-        log_task(task_id, "смена ip", "Не удалось сменить IP")
-        raise Exception("Не удалось сменить IP прокси")
-    
-    log_task(task_id, "завершение", "Шаг завершён")
+        url = Proxy().change_ip_url
+        data = requests.get(url, headers=headers)
+        log_task(task_id, "смена ip", "Запрос на смену IP отправлен")
+
+        if data.json().get('code') != 200:
+            log_task(task_id, "смена ip", "Не удалось сменить IP")
+            raise Exception("Не удалось сменить IP прокси")
+        
+        log_task(task_id, "завершение", "Шаг завершён")
+    except Exception as e:
+        raise Exception(f"Ошибка на шаге 2:\n{e}")
+    finally:
+        if phone:
+            SMSManager().update_tag(phone, tag_name=None)
+
 
 
 if __name__ == "__main__":
