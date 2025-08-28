@@ -47,6 +47,8 @@ def start(task_id, sleep_time=5, timeout=120, screenshot=True):
         log_task(task_id, "отправка формы", "Кнопка отправки нажата")
 
         # Ждем смс с кодом
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_3.png")
         log_task(task_id, "отправка формы", "Ждем смс с кодом")
         sms_code = wait_sms_code(
             task.phone_number, 
@@ -62,7 +64,7 @@ def start(task_id, sleep_time=5, timeout=120, screenshot=True):
         log_task(task_id, "ввод данных", "SMS-код введён")
         WebDriverWait(driver, sleep_time)
         if screenshot:
-            save_task_screenshot(driver, task_id, "step_2_3.png")
+            save_task_screenshot(driver, task_id, "step_2_4.png")
 
         # Ждем регистрации
         WebDriverWait(driver, timeout).until(
@@ -74,7 +76,7 @@ def start(task_id, sleep_time=5, timeout=120, screenshot=True):
         log_task(task_id, "регистрация", "Карта успешно оформлена")
         WebDriverWait(driver, sleep_time)
         if screenshot:
-            save_task_screenshot(driver, task_id, "step_2_4.png")
+            save_task_screenshot(driver, task_id, "step_2_5.png")
 
         log_task(task_id, "завершение", "Шаг 2 завершён успешно")
     except Exception as e:

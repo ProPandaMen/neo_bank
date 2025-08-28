@@ -8,12 +8,24 @@ from PIL import Image
 
 import streamlit as st
 import pandas as pd
+import base64
 import math
 import json
 import time
 
 
 UPDATE_INTERVAL = 5
+
+
+def _img_b64(p: Path) -> str:
+    return base64.b64encode(p.read_bytes()).decode("ascii")
+
+def _mime(p: Path) -> str:
+    s = p.suffix.lower()
+    if s in {".jpg", ".jpeg"}: return "image/jpeg"
+    if s == ".png": return "image/png"
+    if s == ".webp": return "image/webp"
+    return "application/octet-stream"
 
 
 def table_block(task_id: int):
@@ -139,9 +151,9 @@ def screenshot_block(task_id: int):
     task = Task.get(id=task_id)
     if not task:
         return
-    
-    st.subheader(f"🖼 Скриншоты задачи")
-    
+
+    st.subheader("🖼 Скриншоты задачи")
+
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
     files = [p for p in root.glob("*") if p.suffix.lower() in exts]
@@ -151,41 +163,50 @@ def screenshot_block(task_id: int):
         st.info("Скриншотов пока нет")
         return
 
-    col_ctrl = st.columns([1,1,2,2])
-    with col_ctrl[0]:
-        per_page = st.selectbox("На странице", [8, 12, 24, 48], index=1)
-    with col_ctrl[1]:
-        grid_cols = st.selectbox("В ряд", [2, 3, 4], index=2)
+    page_size = 3
     total = len(files)
-    pages = max(1, math.ceil(total / per_page))
-    with col_ctrl[2]:
-        st.write(f"Найдено: {total}")
-    with col_ctrl[3]:
-        page = st.number_input("Страница", min_value=1, max_value=pages, value=1)
+    pages = max(1, math.ceil(total / page_size))
+    if "shot_page" not in st.session_state:
+        st.session_state.shot_page = 1
 
-    start = (page - 1) * per_page
-    chunk = files[start:start + per_page]
+    col_nav = st.columns([1, 4, 1])
+    with col_nav[0]:
+        if st.button("←", use_container_width=True):
+            st.session_state.shot_page = pages if st.session_state.shot_page <= 1 else st.session_state.shot_page - 1
+    with col_nav[1]:
+        st.write(f"Страница {st.session_state.shot_page} из {pages} · Найдено: {total}")
+    with col_nav[2]:
+        if st.button("→", use_container_width=True):
+            st.session_state.shot_page = 1 if st.session_state.shot_page >= pages else st.session_state.shot_page + 1
 
-    cols = st.columns(grid_cols)
+    start = (st.session_state.shot_page - 1) * page_size
+    chunk = files[start:start + page_size]
+
+    cols = st.columns(len(chunk))
     for i, p in enumerate(chunk):
-        with cols[i % grid_cols]:
+        with cols[i]:
             ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
             st.caption(f"{p.name} · {ts}")
-            img = Image.open(p)
-            st.image(img, use_container_width=True)
-            c1, c2 = st.columns(2)
-            with c1:
-                st.download_button("Скачать", data=p.read_bytes(), file_name=p.name, mime="image/png")
-            with c2:
-                if st.button("Открыть", key=f"open_{p.name}"):
-                    st.session_state["shot_preview"] = str(p)
+            src = f"data:{_mime(p)};base64,{_img_b64(p)}"
+            params = st.query_params
+            html = f'<a href="?{params.urlencode()}&open={p.name}"><img src="{src}" style="width:100%;height:auto;border-radius:12px;display:block"/></a>'
+            st.markdown(html, unsafe_allow_html=True)
 
-    if "shot_preview" in st.session_state:
-        p = Path(st.session_state["shot_preview"])
-        if p.exists():
-            st.markdown("---")
-            st.subheader(f"Предпросмотр: {p.name}")
-            st.image(Image.open(p), use_container_width=True)
+    q = st.query_params
+    if "open" in q:
+        name = q.get("open")
+        target = next((pp for pp in files if pp.name == name), None)
+        if target and target.exists():
+            @st.dialog(f"Просмотр: {target.name}", width="large")
+            def _dlg():
+                st.image(Image.open(target), use_container_width=True)
+                if st.button("Закрыть", use_container_width=True):
+                    qp = dict(st.query_params)
+                    qp.pop("open", None)
+                    st.query_params.clear()
+                    for k, v in qp.items():
+                        st.query_params[k] = v
+            _dlg()
 
 
 def render_task_details(task_id: int):
