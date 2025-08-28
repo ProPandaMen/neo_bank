@@ -31,7 +31,7 @@ def table_block(task_id: int):
     }
 
     df = pd.DataFrame(list(data.items()), columns=["Параметр", "Значение"])
-    st.subheader(f"📋 Параметры задачи #{task.id}")
+    st.subheader(f"📋 Параметры задачи")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 
@@ -75,16 +75,12 @@ def button_block(task_id: int):
             st.rerun()
 
 
-def render_task_details(task_id: int):
-    cols = st.columns(2)
-    if cols[0].button("← Все задачи"):
-        st.query_params.pop("task_id", None)
-        st.rerun()
-
-    table_block(task_id)
-    button_block(task_id)
-
-    st.subheader(f"🧾 Логи задачи #{task_id}")
+def logs_block(task_id: int):
+    task = Task.get(id=task_id)
+    if not task:
+        return
+    
+    st.subheader(f"🧾 Логи задачи")
 
     ctrl = st.columns([2, 1])
     auto = ctrl[0].toggle("Автообновление", value=False)
@@ -130,3 +126,23 @@ def render_task_details(task_id: int):
     if auto:
         time.sleep(UPDATE_INTERVAL)
         st.rerun()
+
+
+def image_block(task_id: int):
+    task = Task.get(id=task_id)
+    if not task:
+        return
+    
+    st.subheader(f"🖼 Скриншоты задачи")
+
+
+def render_task_details(task_id: int):
+    cols = st.columns(2)
+    if cols[0].button("← Все задачи"):
+        st.query_params.pop("task_id", None)
+        st.rerun()
+
+    table_block(task_id)
+    button_block(task_id)
+    logs_block(task_id)
+    image_block(task_id)
