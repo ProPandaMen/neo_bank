@@ -74,7 +74,9 @@ def start(task_id, sleep_time=20):
         card_cvv_value = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/div/span[2]')
         task.card_cvv = card_cvv_value.text
         task.save()
-        WebDriverWait(driver, sleep_time)        
+        WebDriverWait(driver, sleep_time)
+    except Exception as e:
+        raise Exception(f"Ошибка на шаге 3:\n{e}")
     finally:
         # Закрываем драйвер
         driver.quit()
