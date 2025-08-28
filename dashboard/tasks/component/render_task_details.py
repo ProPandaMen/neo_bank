@@ -158,16 +158,19 @@ def screenshot_block(task_id: int):
     i = st.session_state[key_idx] % n
     p = files[i]
 
-    # 1. Общее количество
-    st.markdown(f"**Всего скриншотов: {n}**")
+    text1, text2, text3 = st.columns(3)
 
-    # 2. Текущий номер
-    st.markdown(f"**Скриншот №{i+1}**")
-
-    # 3. Изображение
-    ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-    st.caption(f"Создан: {ts}")
-    st.image(Image.open(p), use_container_width=True)
+    with text1:
+        # 1. Общее количество
+        st.markdown(f"**Всего скриншотов: {n}**")
+    with text2:
+        # 2. Текущий номер
+        st.markdown(f"**Скриншот №{i+1}**")
+    with text3:
+        # 3. Изображение
+        ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        st.caption(f"Создан: {ts}")
+        st.image(Image.open(p), use_container_width=True)
 
     # 4. Кнопки
     c1, c2, c3 = st.columns(3)
@@ -180,7 +183,6 @@ def screenshot_block(task_id: int):
             @st.dialog(f"Просмотр: {p.name}", width="large")
             def _dlg():
                 st.image(Image.open(p), use_container_width=True)
-                st.button("Закрыть", use_container_width=True, key=f"close_{task_id}")
             _dlg()
     with c3:
         if st.button("→", use_container_width=True, key=f"next_{task_id}"):
