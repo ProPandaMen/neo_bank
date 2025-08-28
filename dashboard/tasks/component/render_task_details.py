@@ -19,16 +19,16 @@ def table_block(task_id: int):
 
     rows = [
         ["ID", task.id],
+        ["Время создания", str(task.created_at)],
+        ["Текущий шаг", task.step_index],
+        ["Всего шагов", task.steps_total],
         ["Статус", str(task.step_status)],
-        ["Шаг", f"{task.step_index + 1}/{task.steps_total}"],
-        ["Попытки", task.step_attempts],
-        ["Ошибка", task.last_error],
-        ["Заблокировано до", str(task.locked_until)],
         ["Заблокировано кем", task.locked_by],
+        ["Заблокировано до", str(task.locked_until)],
         ["Начато в", str(task.step_started_at)],
+        ["Попытки", task.step_attempts],
         ["Следующая попытка", str(task.next_attempt_at)],
-        ["Создано", str(task.created_at)],
-        ["Обновлено", str(task.updated_at)],
+        ["Последняя ошибка", task.last_error],
     ]
 
     st.subheader(f"📋 Параметры задачи #{task.id}")
