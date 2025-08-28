@@ -7,7 +7,7 @@ from mts_manager.base import wait_click, wait_visible, get_driver
 from sms_api.main import wait_sms_code
 from utils.task_logging import log_task
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import argparse
 
@@ -15,7 +15,7 @@ import argparse
 def start(task_id, sleep_time=5, timeout=120):
     task = Task.get(id=task_id)
     if not task:
-        raise Exception(f"Отсутствует задача ID {task_id}")    
+        raise Exception(f"Отсутствует задача ID {task_id}")
     log_task(task_id, "загрузка данных", f"Задача #{task_id}, номер: {task.phone_number}")
 
     # Инициализация драйвера
@@ -42,7 +42,13 @@ def start(task_id, sleep_time=5, timeout=120):
         log_task(task_id, "отправка формы", "Кнопка отправки нажата")
 
         # Ждем смс с кодом
-        sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc))
+        log_task(task_id, "отправка формы", "Ждем смс с кодом")
+        sms_code = wait_sms_code(
+            task.phone_number, 
+            datetime.now(timezone.utc) - timedelta(minutes=2)
+        )
+        if not sms_code:
+            raise Exception(f"Отсутствует задача ID {task_id}")
         log_task(task_id, "смс", f"Получен SMS-код {sms_code}")
         WebDriverWait(driver, sleep_time)
 
