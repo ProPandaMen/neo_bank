@@ -159,7 +159,6 @@ def screenshot_block(task_id: int):
     p = files[i]
 
     text1, text2, text3 = st.columns(3)
-
     with text1:
         # 1. Общее количество
         st.markdown(f"**Всего скриншотов: {n}**")
@@ -170,7 +169,8 @@ def screenshot_block(task_id: int):
         # 3. Изображение
         ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
         st.caption(f"Создан: {ts}")
-        st.image(Image.open(p), use_container_width=True)
+
+    st.image(Image.open(p), use_container_width=True)
 
     # 4. Кнопки
     c1, c2, c3 = st.columns(3)
