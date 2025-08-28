@@ -3,6 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
 from database.models.task import Task
+from utils.task_screenshot import save_task_screenshot
 from mts_manager.base import wait_click, wait_visible, get_driver
 from sms_api.main import wait_sms_code
 from utils.task_logging import log_task
@@ -12,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 import argparse
 
 
-def start(task_id, sleep_time=5, timeout=120):
+def start(task_id, sleep_time=5, timeout=120, screenshot=True):
     task = Task.get(id=task_id)
     if not task:
         raise Exception(f"Отсутствует задача ID {task_id}")
@@ -31,12 +32,16 @@ def start(task_id, sleep_time=5, timeout=120):
         driver.get("https://mtsdengi.ru/karti/debet-mts-dengi-virtual/")
         log_task(task_id, "открытие сайта", "Открыта страница оформления карты")
         WebDriverWait(driver, sleep_time)
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_1.png")
 
         # Вводим номер телефона
         phone_field = wait_visible(driver, '//*[@id="cardFormInput"]')
         phone_field.send_keys(task.phone_number[1:])
         log_task(task_id, "ввод данных", f"Введён номер телефона {task.phone_number}")
         WebDriverWait(driver, sleep_time)
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_2.png")
 
         wait_click(driver, '//*[@id="issueCard"]/div[2]/form/div/div[5]/button')
         log_task(task_id, "отправка формы", "Кнопка отправки нажата")
@@ -56,6 +61,8 @@ def start(task_id, sleep_time=5, timeout=120):
         driver.switch_to.active_element.send_keys(sms_code)
         log_task(task_id, "ввод данных", "SMS-код введён")
         WebDriverWait(driver, sleep_time)
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_3.png")
 
         # Ждем регистрации
         WebDriverWait(driver, timeout).until(
@@ -66,6 +73,8 @@ def start(task_id, sleep_time=5, timeout=120):
         )
         log_task(task_id, "регистрация", "Карта успешно оформлена")
         WebDriverWait(driver, sleep_time)
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_4.png")
 
         log_task(task_id, "завершение", "Шаг 2 завершён успешно")
     except Exception as e:

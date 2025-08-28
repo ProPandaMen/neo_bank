@@ -13,7 +13,7 @@ import time
 import argparse
 
 
-def start(task_id, sleep_time=20):
+def start(task_id, sleep_time=20, screenshot=True):
     task = Task.get(id=task_id)
     if not task:
         raise Exception(f"Отсутствует задача ID {task_id}")    
@@ -28,40 +28,43 @@ def start(task_id, sleep_time=20):
         driver.get("https://online.mtsdengi.ru/")
         WebDriverWait(driver, sleep_time)
         time.sleep(sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_1.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_1.png")
 
         # Вводим номер телефон
         log_task(task_id, "ввод данных", f"Ввод номера телефона {task.phone_number}")            
         phone_field = wait_visible(driver, '//*[@id="login"]')
         phone_field.send_keys(task.phone_number[1:])
-        WebDriverWait(driver, sleep_time)       
-        save_task_screenshot(driver, task_id, "step_3_2.png")
+        WebDriverWait(driver, sleep_time)
 
         # Нажимаем кнопку войти
         log_task(task_id, "отправка формы", "Кнопка 'Войти' нажата")
         wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')
-        save_task_screenshot(driver, task_id, "step_3_3.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_2.png")
 
         # Ждем смс с кодом
         log_task(task_id, "смс", "Ожидание SMS-кода")
         sms_code = wait_sms_code(task.phone_number, datetime.now(timezone.utc) - timedelta(minutes=2))
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_4.png")
 
         # Вводим код
         log_task(task_id, "ввод данных", f"Ввод SMS-кода {sms_code}")
         driver.switch_to.active_element.send_keys(sms_code)
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_5.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_3.png")
 
         # Убираем рекламу
         try:
             time.sleep(sleep_time)
             log_task(task_id, "интерфейс", "Попытка закрыть рекламу")
-            save_task_screenshot(driver, task_id, "step_3_6_1.png")
+            if screenshot:
+                save_task_screenshot(driver, task_id, "step_3_4.png")
             wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[1]/div[2]')
             WebDriverWait(driver, sleep_time)
-            save_task_screenshot(driver, task_id, "step_3_6.png")
+            if screenshot:
+                save_task_screenshot(driver, task_id, "step_3_5.png")
             log_task(task_id, "интерфейс", "Реклама закрыта")
         except Exception:
             log_task(task_id, "интерфейс", "Рекламы не было")
@@ -70,13 +73,15 @@ def start(task_id, sleep_time=20):
         log_task(task_id, "карта", "Открываем страницу карты")
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div/div/div[3]/div/div[2]/div/div')
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_7.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_6.png")
 
         # Показать номер карты
         log_task(task_id, "карта", "Нажатие на кнопку 'Показать номер карты'")
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[1]/div')
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_8.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_7.png")
 
         # Записываем номер карты
         card_number_block = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[1]/div/div/div/div/span')
@@ -84,7 +89,8 @@ def start(task_id, sleep_time=20):
         task.save()
         log_task(task_id, "карта", f"Считан номер карты: {task.card_number}")
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_9.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_8.png")
 
         # Записываем номер карты
         card_date_block = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[2]/div/div/div/span')
@@ -92,13 +98,15 @@ def start(task_id, sleep_time=20):
         task.save()
         log_task(task_id, "карта", f"Считана дата карты: {task.card_date}")
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_10.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_9.png")
 
         # Показываем CVV
         log_task(task_id, "карта", "Нажатие на кнопку 'Показать CVV'")
         wait_click(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/i')
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_11.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_10.png")
 
         # Записываем CVV
         card_cvv_value = wait_visible(driver, '//*[@id="__next"]/div[1]/div/div[2]/div[2]/div/div[1]/div[1]/div[2]/div/div[2]/div/div[3]/div/div/div/span[2]')
@@ -106,7 +114,8 @@ def start(task_id, sleep_time=20):
         task.save()
         log_task(task_id, "карта", f"Считан CVV: {task.card_cvv}")
         WebDriverWait(driver, sleep_time)
-        save_task_screenshot(driver, task_id, "step_3_12.png")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_3_11.png")
 
         log_task(task_id, "завершение", "Шаг 3 выполнен успешно")
     except Exception as e:
