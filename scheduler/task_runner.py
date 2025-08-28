@@ -120,14 +120,12 @@ def current_script(t: Task, scripts: list) -> str:
 
 @celery_app.task(name="scheduler.task_execute", bind=True)
 def task_execute(self, task_id: int):
-    logger.info("▶️ Начало выполнения task_execute")
-    log_celery(task_id, "старт", "Запуск задачи")
+    log_celery(task_id, "старт", f"Запуск задачи ID {task_id}")
 
     cfg = get_settings()
     t = fetch_task(task_id)
 
     if not t:
-        logger.error(f"❌ Задача {task_id} не найдена")
         log_celery(task_id, "проверка", "Задача не найдена")
         return "missing"
     
@@ -148,7 +146,7 @@ def task_execute(self, task_id: int):
     log_celery(task_id, "блокировка", f"Заблокировано воркером {hostname} до {t.locked_until.isoformat()}Z")
 
     path = current_script(t, scripts)
-    log_celery(task_id, "выполнение", f"Старт шага {t.step_index+1}/{t.steps_total}: {path}")
+    log_celery(task_id, "выполнение", f"Старт шага: {t.step_index+1}/{t.steps_total}\n{path}\nID {t.id}")
 
     code, out, err = run_script(path, t.id)
     record_streams(t.id, out, err)
@@ -157,7 +155,5 @@ def task_execute(self, task_id: int):
         return handle_failure(t, code, err, cfg, now)
     
     handle_success(t, path)
-    logger.info("✅ Завершение выполнения task_execute")
     
     return "ok"
-
