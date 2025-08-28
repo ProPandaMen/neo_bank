@@ -1,5 +1,6 @@
 from database.models.task import Task, TaskLogs, StepStatus
 from utils.task_logging import log_dashboard
+from urllib.parse import urlencode, quote
 
 from config import SCREENSHOT_DIR
 from pathlib import Path
@@ -151,9 +152,9 @@ def screenshot_block(task_id: int):
     task = Task.get(id=task_id)
     if not task:
         return
-
+    
     st.subheader("🖼 Скриншоты задачи")
-
+    
     root = Path(SCREENSHOT_DIR) / str(task_id)
     exts = {".png", ".jpg", ".jpeg", ".webp"}
     files = [p for p in root.glob("*") if p.suffix.lower() in exts]
@@ -188,9 +189,10 @@ def screenshot_block(task_id: int):
             ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
             st.caption(f"{p.name} · {ts}")
             src = f"data:{_mime(p)};base64,{_img_b64(p)}"
-            params = st.query_params
-            html = f'<a href="?{params.urlencode()}&open={p.name}"><img src="{src}" style="width:100%;height:auto;border-radius:12px;display:block"/></a>'
-            st.markdown(html, unsafe_allow_html=True)
+            qp = dict(st.query_params)
+            qs = urlencode(qp, doseq=True)
+            href = f"?{qs}&open={quote(p.name)}" if qs else f"?open={quote(p.name)}"
+            st.markdown(f'<a href="{href}"><img src="{src}" style="width:100%;height:auto;border-radius:12px;display:block"/></a>', unsafe_allow_html=True)
 
     q = st.query_params
     if "open" in q:
