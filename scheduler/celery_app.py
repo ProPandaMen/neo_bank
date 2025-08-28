@@ -35,9 +35,8 @@ celery_app.conf.update(
 )
 
 celery_app.conf.update(
-    worker_hijack_root_logger=False,
-    worker_log_format="%(message)s",
-    worker_task_log_format="%(message)s",
+    worker_redirect_stdouts=True,
+    worker_redirect_stdouts_level="INFO",
 )
 
 @after_setup_logger.connect
