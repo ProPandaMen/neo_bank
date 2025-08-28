@@ -28,16 +28,19 @@ def start(task_id, sleep_time=20):
         driver.get("https://online.mtsdengi.ru/")
         WebDriverWait(driver, sleep_time)
         time.sleep(sleep_time)
+        driver.save_screenshot(f"debug/1.png")
 
         # Вводим номер телефон
         log_task(task_id, "ввод данных", f"Ввод номера телефона {task.phone_number}")            
         phone_field = wait_visible(driver, '//*[@id="login"]')
         phone_field.send_keys(task.phone_number[1:])
-        WebDriverWait(driver, sleep_time)        
+        WebDriverWait(driver, sleep_time)       
+        driver.save_screenshot(f"debug/2.png")
 
         # Нажимаем кнопку войти
         log_task(task_id, "отправка формы", "Кнопка 'Войти' нажата")
         wait_click(driver, '//*[@id="root"]/div[2]/main/div/div[3]/button')
+        driver.save_screenshot(f"debug/3.png")
 
         # Ждем смс с кодом
         log_task(task_id, "смс", "Ожидание SMS-кода")
