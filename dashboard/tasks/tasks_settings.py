@@ -108,12 +108,19 @@ def task_setting_scripts(task, scripts):
             st.rerun()
 
 def main():
-    st.set_page_config(page_title="Task Scripts", layout="wide")
+    st.set_page_config(page_title="Насстройка задач", layout="wide")
 
     task_settings = TaskSettings.get(name="default") or TaskSettings.create(name="default", scripts=[])
     task_scripts = list(task_settings.scripts or [])
 
-    task_setting_field(task_settings)
-    task_setting_scripts(task_settings, task_scripts)
+    tab_field, tab_scripts = st.tabs([
+        "Параметры"
+        "Скрипты"
+    ])
+
+    with tab_field:
+        task_setting_field(task_settings)
+    with tab_scripts:
+        task_setting_scripts(task_settings, task_scripts)
 
 main()

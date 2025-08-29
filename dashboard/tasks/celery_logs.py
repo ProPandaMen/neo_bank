@@ -7,7 +7,7 @@ import json
 
 LOG_FILE = Path("logs/celery.log")
 
-st.set_page_config(page_title="Celery Logs", layout="wide")
+st.set_page_config(page_title="Логи фоновых задач", layout="wide")
 st.title("Celery Logs")
 
 auto = st.toggle("Автообновление", value=False)

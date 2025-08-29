@@ -4,9 +4,6 @@ from dashboard.tasks.component.render_task_details import render_task_details
 import streamlit as st
 import pandas as pd
 
-
-st.set_page_config(page_title="Задачи", layout="wide")
-
 status_map = {
     StepStatus.WAITING: "🟡 Ожидание",
     StepStatus.RUNNING: "🟠 В работе",
@@ -59,6 +56,8 @@ def render_tasks_table():
 
 
 def main():
+    st.set_page_config(page_title="Задачи", layout="wide")
+    
     task_id = get_selected_task_id()
     render_title(task_id)
 
