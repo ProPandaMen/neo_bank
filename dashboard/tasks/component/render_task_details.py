@@ -177,7 +177,7 @@ def screenshot_block(task_id: int):
         
     st.markdown(f'<img src="{_img_data_uri(p)}" style="width:100%;">', unsafe_allow_html=True)
     
-    c1, c2 = st.columns(3)
+    c1, c2 = st.columns(2)
     with c1:
         if st.button("←", use_container_width=True, key=f"prev_{task_id}"):
             st.session_state[key_idx] = (i - 1) % n
