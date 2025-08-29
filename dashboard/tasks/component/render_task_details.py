@@ -8,11 +8,19 @@ from PIL import Image
 
 import streamlit as st
 import pandas as pd
+import base64
 import json
 import time
 
 
 UPDATE_INTERVAL = 5
+
+
+def _img_data_uri(path: Path) -> str:
+    b = path.read_bytes()
+    ext = path.suffix.lower()
+    mime = "image/png" if ext == ".png" else "image/jpeg"
+    return f"data:{mime};base64,{base64.b64encode(b).decode()}"
 
 
 def table_block(task_id: int):
@@ -160,31 +168,21 @@ def screenshot_block(task_id: int):
 
     text1, text2, text3 = st.columns(3)
     with text1:
-        # 1. Общее количество
         st.markdown(f"**Всего скриншотов: {n}**")
     with text2:
-        # 2. Текущий номер
         st.markdown(f"**Скриншот №{i+1}**")
     with text3:
-        # 3. Изображение
         ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
         st.caption(f"Создан: {ts}")
         
-    st.image(Image.open(p), use_container_width=True)
-
-    # 4. Кнопки
-    c1, c2, c3 = st.columns(3)
+    st.markdown(f'<img src="{_img_data_uri(p)}" style="width:100%;">', unsafe_allow_html=True)
+    
+    c1, c2 = st.columns(3)
     with c1:
         if st.button("←", use_container_width=True, key=f"prev_{task_id}"):
             st.session_state[key_idx] = (i - 1) % n
-            st.rerun()
+            st.rerun()    
     with c2:
-        if st.button("🔍 Увеличить", use_container_width=True, key=f"zoom_{task_id}"):
-            @st.dialog(f"Просмотр: {p.name}", width="large")
-            def _dlg():
-                st.image(Image.open(p), use_container_width=True)
-            _dlg()
-    with c3:
         if st.button("→", use_container_width=True, key=f"next_{task_id}"):
             st.session_state[key_idx] = (i + 1) % n
             st.rerun()
