@@ -169,7 +169,7 @@ def screenshot_block(task_id: int):
         # 3. Изображение
         ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
         st.caption(f"Создан: {ts}")
-
+        
     st.image(Image.open(p), use_container_width=True)
 
     # 4. Кнопки
