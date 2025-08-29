@@ -63,7 +63,7 @@ def task_planner():
     expired = Task.filter_ex(
         where=[and_(
             Task.step_status == StepStatus.RUNNING,
-            Task.updated_at < datetime.utcnow() - timedelta(seconds=step_timeout)
+            Task.next_attempt_at < datetime.utcnow() - timedelta(seconds=step_timeout)
         )]
     )
 
