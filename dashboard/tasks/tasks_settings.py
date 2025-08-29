@@ -114,7 +114,7 @@ def main():
     task_scripts = list(task_settings.scripts or [])
 
     tab_field, tab_scripts = st.tabs([
-        "Параметры"
+        "Параметры",
         "Скрипты"
     ])
 
