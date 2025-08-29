@@ -36,6 +36,7 @@ def render_tasks_table():
             "Создано": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "Шаг": f"{task.step_index + 1}/{task.steps_total}",
             "Статус": status_map.get(task.step_status, ""),
+            "Запуски": task.steps_total,
             "Подробнее": f"/tasks_table?task_id={task.id}",
         })
 
