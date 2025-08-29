@@ -27,6 +27,8 @@ def start(task_id, sleep_time=5, timeout=120, screenshot=True):
         # Заходим на сайт
         driver.get("https://mtsdengi.ru/")
         log_task(task_id, "открытие сайта", "Открыт mtsdengi.ru")
+        if screenshot:
+            save_task_screenshot(driver, task_id, "step_2_0.png")
         WebDriverWait(driver, sleep_time)
 
         driver.get("https://mtsdengi.ru/karti/debet-mts-dengi-virtual/")

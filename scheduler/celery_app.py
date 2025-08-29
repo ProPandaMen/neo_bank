@@ -21,7 +21,7 @@ celery_app.conf.update(
     beat_schedule={
         "planner-tick": {
             "task": "scheduler.task_planner",
-            "schedule": 10.0,
+            "schedule": 60.0,
         },
     }
 )
