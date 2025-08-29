@@ -196,7 +196,18 @@ def render_task_details(task_id: int):
         st.query_params.pop("task_id", None)
         st.rerun()
 
-    table_block(task_id)
-    button_block(task_id)
-    logs_block(task_id)
-    screenshot_block(task_id)
+    tab_info, tab_logs, tab_shots = st.tabs([
+        "Информация", 
+        "Логи", 
+        "Скриншоты"
+    ])
+
+    with tab_info:
+        table_block(task_id)
+        button_block(task_id)
+
+    with tab_logs:
+        logs_block(task_id)
+
+    with tab_shots:
+        screenshot_block(task_id)
